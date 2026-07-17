@@ -1,0 +1,103 @@
+/* About Page Styles */
+.aboutSection {
+  background-color: var(--color-cream);
+  padding: 6rem 0;
+  min-height: 80vh;
+}
+
+.aboutHeader {
+  text-align: center;
+  max-width: 48rem;
+  margin: 0 auto 4rem;
+}
+
+.aboutTitle {
+  font-size: 2.5rem;
+  color: var(--color-dark);
+  margin-bottom: 1rem;
+  line-height: 1.2;
+}
+
+@media (min-width: 768px) {
+  .aboutTitle { font-size: 4rem; }
+}
+
+.aboutSubtitle {
+  font-size: 1.125rem;
+  color: #6b7280;
+  font-weight: 300;
+  line-height: 1.6;
+}
+
+.contentGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 4rem;
+  align-items: center;
+}
+
+@media (min-width: 1024px) {
+  .contentGrid { grid-template-columns: 1fr 1fr; }
+}
+
+.imageWrapper {
+  aspect-ratio: 4 / 5;
+  border-radius: 1rem;
+  overflow: hidden;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.textContent {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.sectionHeading {
+  font-size: 2rem;
+  color: var(--color-dark);
+  margin-bottom: 0.5rem;
+}
+
+.textParagraph {
+  font-size: 1rem;
+  color: #4b5563;
+  line-height: 1.8;
+  font-weight: 300;
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2rem;
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.statItem {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.statNumber {
+  font-size: 2.5rem;
+  font-weight: 600;
+  color: var(--color-gold);
+  line-height: 1;
+}
+
+.statLabel {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-dark);
+}
