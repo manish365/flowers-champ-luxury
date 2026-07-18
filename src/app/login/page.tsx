@@ -7,6 +7,8 @@ import styles from "@/components/auth/Auth.module.css";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 
+import homeStyles from "@/app/page.module.css";
+
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -44,9 +46,22 @@ export default function LoginPage() {
   return (
     <section className={styles.authSection}>
       <div className={styles.authContainer}>
-        {/* Left Side: Image (Hidden on mobile) */}
-        <div className={styles.imageSection}>
-          <div className={styles.imageOverlay}>
+        {/* Left Side: Overlapping Store Images (Hidden on mobile) */}
+        <div className={`${styles.imageSection} ${homeStyles.sectionCream}`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '3rem', position: 'relative' }}>
+          <div className={homeStyles.storyImageContainer} style={{ width: '100%', height: '100%', minHeight: '350px' }}>
+            <div className={homeStyles.storyImageAccent}></div>
+            <img 
+              src="/images/store.jpeg" 
+              alt="Store Interior" 
+              className={`${homeStyles.storyImage} ${homeStyles.storyImageMain}`} 
+            />
+            <img 
+              src="/images/store2.jpeg" 
+              alt="Store Front" 
+              className={`${homeStyles.storyImage} ${homeStyles.storyImageSecondary}`} 
+            />
+          </div>
+          <div className={styles.imageOverlay} style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.3) 60%, transparent 100%)', zIndex: 10 }}>
             <h2 className={styles.imageTitle}>Welcome to Luxury</h2>
             <p className={styles.imageDesc}>Sign in to experience the finest floral arrangements and exclusive benefits tailored just for you.</p>
           </div>
