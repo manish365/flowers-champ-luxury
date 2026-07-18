@@ -29,3 +29,15 @@ export async function fetchReviews(page = 1, limit = 10) {
   if (!res.ok) throw new Error('Failed to fetch reviews');
   return res.json();
 }
+
+export async function fetchAreas() {
+  const res = await fetch(`${BASE_URL}/area`, { next: { revalidate: 3600 } });
+  if (!res.ok) throw new Error('Failed to fetch areas');
+  return res.json();
+}
+
+export async function fetchFooterData() {
+  const res = await fetch(`${BASE_URL}/cms-footer`, { next: { revalidate: 3600 } });
+  if (!res.ok) throw new Error('Failed to fetch footer');
+  return res.json();
+}

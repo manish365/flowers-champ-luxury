@@ -5,23 +5,17 @@ import {
   HeartHandshake, ShieldCheck, Gift, Heart, Gem, Briefcase,
   ShoppingBag, Camera, Quote
 } from "lucide-react";
-import { fetchWebsiteCmsData, fetchReviews } from "@/lib/api";
+import { fetchWebsiteCmsData } from "@/lib/api";
+import Reviews from "@/components/home/Reviews";
 import styles from "./page.module.css";
 
 export default async function Home() {
   let cmsData = null;
-  let reviews = [];
   
   try {
     const cmsRes = await fetchWebsiteCmsData();
     cmsData = cmsRes?.data?.[0] || cmsRes?.[0] || null;
   } catch (e) { console.error("Error fetching CMS data:", e); }
-
-  try {
-    const revRes = await fetchReviews(1, 4); // Only fetch a few for the homepage
-    reviews = revRes?.data || revRes || [];
-    if (!Array.isArray(reviews)) reviews = [];
-  } catch (e) { console.error("Error fetching reviews:", e); }
 
   // Extract products from CMS Data for Best Sellers (or default to fallback if missing)
   const bestSellers = cmsData?.bestSellersSection?.midSections || [
@@ -290,43 +284,6 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* Reviews Section */}
-      {reviews.length > 0 && (
-        <section className={`${styles.section} ${styles.sectionCream}`}>
-          <div className="container">
-            <div className={styles.sectionHeader}>
-              <h2 className={`${styles.sectionTitle} font-serif`}>WHAT OUR CUSTOMERS SAY</h2>
-              <div className={styles.sectionDivider}>
-                <div className={styles.dividerLine}></div>
-                <Star size={16} />
-                <div className={styles.dividerLine}></div>
-              </div>
-            </div>
-            
-            <div className={styles.reviewGrid}>
-              {reviews.map((review: any, i: number) => (
-                <div key={i} className={styles.reviewCard}>
-                  <div className={styles.reviewHeader}>
-                    <div className={styles.reviewAvatar}>
-                      {review.name.charAt(0).toUpperCase()}
-                    </div>
-                    <div>
-                      <h4 className={styles.reviewName}>{review.name}</h4>
-                      <div className={styles.stars}>
-                        {[...Array(5)].map((_, idx) => (
-                          <Star key={idx} size={12} fill={idx < Math.round(Number(review.rating) || 5) ? "currentColor" : "none"} />
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                  <h5 className={styles.reviewTitle}>{review.title}</h5>
-                  <p className={styles.reviewText}>"{review.review}"</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
 
       {/* Instagram Feed */}
       <section className={`${styles.section} ${styles.sectionCream}`} style={{ paddingTop: '1rem' }}>
@@ -364,6 +321,8 @@ export default async function Home() {
           </div>
         </div>
       </section>
+
+      <Reviews />
     </>
   );
 }
