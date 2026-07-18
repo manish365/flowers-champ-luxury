@@ -1,52 +1,93 @@
-import Link from "next/link";
-import { Camera, ArrowRight } from "lucide-react";
-import styles from "@/app/page.module.css";
+"use client";
 
-interface InstagramFeedProps {
-  cmsData?: any;
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { ArrowRight, Heart } from "lucide-react";
+import { fetchProducts } from "@/lib/api";
+import styles from "./InstagramFeed.module.css";
+
+function InstagramIcon({ size = 20 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
+      <circle cx="12" cy="12" r="4" />
+      <circle cx="17.5" cy="6.5" r="0.5" fill="currentColor" stroke="none" />
+    </svg>
+  );
 }
 
-export default function InstagramFeed({ cmsData }: InstagramFeedProps) {
-  // If the backend adds an instagram images array to the CMS data, it will be used here. 
-  // Otherwise, it falls back to placeholder images.
-  const feedImages = cmsData?.instagramImages || cmsData?.socialFeed || [
-    'https://images.unsplash.com/photo-1582794543139-8ac9cb0f7b11?q=80&w=400&auto=format&fit=crop',
-    'https://images.unsplash.com/photo-1554520735-0a145211822a?q=80&w=400&auto=format&fit=crop',
-    'https://images.unsplash.com/photo-1457089328109-e5d9bd499191?q=80&w=400&auto=format&fit=crop',
-    'https://images.unsplash.com/photo-1519225421980-715cb0215aed?q=80&w=400&auto=format&fit=crop',
-  ];
+const IG_URL = "https://www.instagram.com/flowerschamp.id";
+
+export default function InstagramFeed() {
+  const [products, setProducts] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetchProducts(12).then((data) => {
+      const all: any[] = data?.results || [];
+      const withImg = all.filter((p) => p.image?.default);
+      const shuffled = withImg.sort(() => Math.random() - 0.5).slice(0, 8);
+      setProducts(shuffled);
+    }).catch(() => {});
+  }, []);
 
   return (
-    <section className={`${styles.section} ${styles.sectionCream}`} style={{ paddingTop: '1rem' }}>
+    <section className={styles.section}>
       <div className="container">
-        <div className={styles.instaGrid}>
-          <div className={styles.instaCta}>
-            <div style={{ position: 'relative', zIndex: 10 }}>
-              <div className={styles.instaIconBox}>
-                <Camera size={24} className="text-gold" />
-              </div>
-              <h3 className={styles.instaLabel}>FOLLOW US ON INSTAGRAM</h3>
-              <p className={`${styles.instaHandle} font-serif`}>@flowerschamp</p>
-              <button className={styles.instaBtn}>
-                FOLLOW US <ArrowRight size={12} />
-              </button>
-            </div>
-            <Camera className={styles.instaBgIcon} />
+        <div className={styles.wrapper}>
+          {/* Left CTA */}
+          <div className={styles.ctaCard}>
+            <div className={styles.ctaIcon}><InstagramIcon size={26} /></div>
+            <p className={styles.ctaLabel}>FOLLOW US ON</p>
+            <h2 className={`${styles.ctaHandle} font-serif`}>@flowerschamp.id</h2>
+            <p className={styles.ctaDesc}>
+              Fresh bouquets, behind-the-scenes &amp; daily floral inspiration — straight from our studio.
+            </p>
+            <Link href={IG_URL} target="_blank" rel="noopener noreferrer" className={styles.ctaBtn}>
+              <InstagramIcon size={13} />
+              Follow on Instagram
+              <ArrowRight size={13} />
+            </Link>
           </div>
 
-          <div className={styles.instaImages}>
-            {feedImages.map((img: string | any, i: number) => {
-              const src = typeof img === 'string' ? img : img.url || img.image;
-              const link = typeof img === 'string' ? '#' : img.link || '#';
-              return (
-                <Link href={link} key={i} className={styles.instaImageWrapper}>
-                  <img src={src} className={styles.instaImage} alt="Instagram feed" />
-                  <div className={styles.instaOverlay}>
-                    <Camera className={styles.instaOverlayIcon} size={24} />
-                  </div>
-                </Link>
-              );
-            })}
+          {/* Right product tiles */}
+          <div className={styles.tilesGrid}>
+            {products.length === 0
+              ? Array.from({ length: 8 }).map((_, i) => (
+                  <div key={i} className={styles.skeleton} />
+                ))
+              : products.map((p) => {
+                  const price = p.countryPrice?.price?.standard?.currentPrice;
+                  return (
+                    <Link
+                      key={p._id}
+                      href={`/products/${p._id}`}
+                      className={styles.tile}
+                    >
+                      <img
+                        src={p.image.default}
+                        alt={p.name}
+                        className={styles.tileImg}
+                      />
+                      <div className={styles.tileOverlay}>
+                        <button
+                          className={styles.heartBtn}
+                          onClick={(e) => e.preventDefault()}
+                          aria-label="Wishlist"
+                        >
+                          <Heart size={11} />
+                        </button>
+                        <div className={styles.tileInfo}>
+                          <p className={styles.tileName}>{p.name}</p>
+                          {price && (
+                            <p className={styles.tilePrice}>
+                              Rp {parseInt(price).toLocaleString("id-ID")}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </Link>
+                  );
+                })}
           </div>
         </div>
       </div>

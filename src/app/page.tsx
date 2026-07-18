@@ -5,12 +5,24 @@ import Link from "next/link";
 import { 
   ArrowRight, MessageCircle, Star, Flower2, Truck, 
   HeartHandshake, ShieldCheck, Gift, Heart, Gem, Briefcase,
-  ShoppingBag, Camera, Quote
+  ShoppingBag, Quote
 } from "lucide-react";
 import { fetchWebsiteCmsData, fetchReviews } from "@/lib/api";
 import Reviews from "@/components/home/Reviews";
 import HeroBanner from "@/components/home/HeroBanner";
+import InstagramFeed from "@/components/home/InstagramFeed";
 import styles from "./page.module.css";
+
+const FALLBACK_IMAGES = [
+  "/images/flowers.jpg",
+  "/images/teddy.jpg",
+  "/images/ballon.jpg",
+  "/images/gift.jpg",
+  "/images/ballon.jpg",
+  "/images/flowers.jpg",
+  "/images/gift.jpg",
+  "/images/teddy.jpg",
+];
 
 
 export default function Home() {
@@ -174,7 +186,7 @@ export default function Home() {
                   <div key={i} className={`${styles.productCard}`}>
                     <div className={styles.productImageWrapper}>
                       <img 
-                        src={product.url || (product.images && product.images[0]?.url)} 
+                        src={FALLBACK_IMAGES[i % FALLBACK_IMAGES.length]}
                         className={styles.productImage} 
                         alt={product.title || product.name} 
                       />
@@ -287,7 +299,7 @@ export default function Home() {
                 <h2 className={`${styles.comboTitle} font-serif`}>{cmsData?.flowerCombo?.title || 'EXCLUSIVE COMBOS'}</h2>
                 <p className={styles.comboSubtitle}>Flowers paired with delightful treats.</p>
               </div>
-              <Link href="#" className={styles.viewAll}>VIEW ALL <ArrowRight size={12} /></Link>
+              {/* <Link href="#" className={styles.viewAll}>VIEW ALL <ArrowRight size={12} /></Link> */}
             </div>
             
             <div className={`${styles.comboGrid} ${combos.length < 4 ? styles.centerGrid : ''}`}>
@@ -308,41 +320,7 @@ export default function Home() {
       )}
 
       {/* Instagram Feed */}
-      <section className={`${styles.section} ${styles.sectionCream}`} style={{ paddingTop: '1rem' }}>
-        <div className="container">
-          <div className={styles.instaGrid}>
-            <div className={styles.instaCta}>
-              <div style={{ position: 'relative', zIndex: 10 }}>
-                <div className={styles.instaIconBox}>
-                  <Camera size={24} className="text-gold" />
-                </div>
-                <h3 className={styles.instaLabel}>FOLLOW US ON INSTAGRAM</h3>
-                <p className={`${styles.instaHandle} font-serif`}>@flowerschamp.id</p>
-                <Link href="https://www.instagram.com/flowerschamp.id" target="_blank" className={styles.instaBtn}>
-                  FOLLOW US <ArrowRight size={12} />
-                </Link>
-              </div>
-              <Camera className={styles.instaBgIcon} />
-            </div>
-
-            <div className={styles.instaImages}>
-              {[
-                'https://images.unsplash.com/photo-1582794543139-8ac9cb0f7b11?q=80&w=400&auto=format&fit=crop',
-                'https://images.unsplash.com/photo-1554520735-0a145211822a?q=80&w=400&auto=format&fit=crop',
-                'https://images.unsplash.com/photo-1457089328109-e5d9bd499191?q=80&w=400&auto=format&fit=crop',
-                'https://images.unsplash.com/photo-1519225421980-715cb0215aed?q=80&w=400&auto=format&fit=crop',
-              ].map((img, i) => (
-                <Link href="https://www.instagram.com/flowerschamp.id" target="_blank" key={i} className={styles.instaImageWrapper}>
-                  <img src={img} className={styles.instaImage} alt="Instagram feed" />
-                  <div className={styles.instaOverlay}>
-                    <Camera className={styles.instaOverlayIcon} size={24} />
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
+      <InstagramFeed />
 
       <Reviews />
     </>

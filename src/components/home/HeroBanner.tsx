@@ -1,7 +1,7 @@
 "use client";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, ArrowRight, MessageCircle } from "lucide-react";
+import { ArrowRight, MessageCircle } from "lucide-react";
 import styles from "@/app/page.module.css";
 
 interface BannerItem {
@@ -28,10 +28,6 @@ export default function HeroBanner({ banners }: HeroBannerProps) {
 
   const nextBanner = () => {
     setActiveIndex((prev) => (prev === validBanners.length - 1 ? 0 : prev + 1));
-  };
-
-  const prevBanner = () => {
-    setActiveIndex((prev) => (prev === 0 ? validBanners.length - 1 : prev - 1));
   };
 
   useEffect(() => {
@@ -122,16 +118,27 @@ export default function HeroBanner({ banners }: HeroBannerProps) {
         </div>
       </div>
       
-      {/* Slider Controls */}
+      {/* Dot indicators */}
       {validBanners.length > 1 && (
-        <>
-          <button className={`${styles.heroSliderBtn} ${styles.heroSliderBtnLeft}`} onClick={prevBanner} aria-label="Previous banner" style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', zIndex: 20, width: '36px', height: '36px' }}>
-            <ChevronLeft size={20} />
-          </button>
-          <button className={`${styles.heroSliderBtn} ${styles.heroSliderBtnRight}`} onClick={nextBanner} aria-label="Next banner" style={{ position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)', zIndex: 20, width: '36px', height: '36px' }}>
-            <ChevronRight size={20} />
-          </button>
-        </>
+        <div style={{ position: 'absolute', bottom: '1rem', left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: '0.4rem', zIndex: 20 }}>
+          {validBanners.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => setActiveIndex(i)}
+              aria-label={`Go to banner ${i + 1}`}
+              style={{
+                width: i === activeIndex ? '1.5rem' : '0.4rem',
+                height: '0.4rem',
+                borderRadius: '9999px',
+                background: i === activeIndex ? 'var(--color-gold)' : 'rgba(255,255,255,0.45)',
+                border: 'none',
+                cursor: 'pointer',
+                transition: 'all 0.3s ease',
+                padding: 0,
+              }}
+            />
+          ))}
+        </div>
       )}
     </div>
   );

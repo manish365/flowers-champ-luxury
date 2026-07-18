@@ -574,9 +574,9 @@
 }
 
 .sectionTitle {
-  font-size: 1.875rem;
+  font-size: 1.275rem;
   color: var(--color-dark);
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.5rem;
   letter-spacing: 0.025em;
   text-transform: uppercase;
 }
