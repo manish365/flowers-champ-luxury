@@ -2,244 +2,253 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { User, MapPin, Calendar, CreditCard, Lock, Check } from "lucide-react";
+import { User, MapPin, Calendar, CreditCard, Lock, Check, ChevronDown, Flower2 } from "lucide-react";
 import styles from "./page.module.css";
 
+const STATIC_ITEMS = [
+  { id: 1, name: "Blush Romance Bouquet", variant: "Premium", price: 850000, qty: 1, img: "/birthday.jpg" },
+  { id: 2, name: "Classic Red Roses", variant: "Standard", price: 680000, qty: 2, img: "/anniversary.jpg" },
+];
+
+const STEPS = ["Cart", "Details", "Payment", "Confirm"];
+
 export default function CheckoutPage() {
-  const [paymentMethod, setPaymentMethod] = useState('credit_card');
+  const [paymentMethod, setPaymentMethod] = useState("bank_transfer");
+  const [step] = useState(1); // 0-based index of current step
 
-  const cartItems = [
-    {
-      id: 1,
-      name: "Blush Romance",
-      size: "Premium",
-      price: 850000,
-      qty: 1,
-      img: "https://images.unsplash.com/photo-1591886960571-74d43a9d4166?q=80&w=200&auto=format&fit=crop"
-    },
-    {
-      id: 2,
-      name: "Classic Red Roses",
-      size: "Standard",
-      price: 680000,
-      qty: 2,
-      img: "https://images.unsplash.com/photo-1546842931-886c185b4c8c?q=80&w=200&auto=format&fit=crop"
-    }
-  ];
+  const fmt = (p: number) =>
+    new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(p);
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(price);
-  };
-
-  const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.qty), 0);
-  const deliveryFee = 50000;
-  const tax = subtotal * 0.11; // 11% PPN
-  const total = subtotal + deliveryFee + tax;
+  const subtotal = STATIC_ITEMS.reduce((s, i) => s + i.price * i.qty, 0);
+  const delivery = 50000;
+  const total = subtotal + delivery;
 
   return (
-    <section className={styles.checkoutSection}>
-      <div className={`container ${styles.checkoutLayout}`}>
-        
-        {/* Form Area */}
-        <div className={styles.formArea}>
-          <form>
-            {/* Contact Information */}
-            <div className={styles.section}>
-              <h2 className={styles.sectionTitle}>
-                <User className={styles.sectionIcon} size={20} /> Contact Information
-              </h2>
-              <div className={styles.formGrid}>
-                <div className={`${styles.formGroup} ${styles.fullWidth}`}>
+    <div className={styles.page}>
+      {/* Header */}
+      <div className={styles.pageHeader}>
+        <div className="container">
+          <div className={styles.breadcrumb}>
+            <Link href="/" className={styles.breadcrumbLink}>Home</Link>
+            <span>/</span>
+            <Link href="/cart" className={styles.breadcrumbLink}>Cart</Link>
+            <span>/</span>
+            <span className={styles.breadcrumbActive}>Checkout</span>
+          </div>
+          <h1 className={`${styles.pageTitle} font-serif`}>Checkout</h1>
+
+          {/* Step indicator */}
+          <div className={styles.steps}>
+            {STEPS.map((s, i) => (
+              <div key={s} className={styles.stepItem}>
+                <div className={`${styles.stepDot} ${i <= step ? styles.stepDotActive : ""} ${i < step ? styles.stepDotDone : ""}`}>
+                  {i < step ? <Check size={12} /> : i + 1}
+                </div>
+                <span className={`${styles.stepLabel} ${i <= step ? styles.stepLabelActive : ""}`}>{s}</span>
+                {i < STEPS.length - 1 && <div className={`${styles.stepLine} ${i < step ? styles.stepLineDone : ""}`} />}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="container">
+        <div className={styles.layout}>
+
+          {/* Left — Form */}
+          <div className={styles.formCol}>
+
+            {/* Contact */}
+            <div className={styles.card}>
+              <h2 className={styles.cardTitle}><User size={16} className={styles.cardIcon} /> Contact Information</h2>
+              <div className={styles.grid2}>
+                <div className={`${styles.field} ${styles.span2}`}>
                   <label className={styles.label}>Email Address</label>
                   <input type="email" className={styles.input} placeholder="your@email.com" />
                 </div>
-                <div className={styles.formGroup}>
+                <div className={styles.field}>
                   <label className={styles.label}>First Name</label>
                   <input type="text" className={styles.input} placeholder="John" />
                 </div>
-                <div className={styles.formGroup}>
+                <div className={styles.field}>
                   <label className={styles.label}>Last Name</label>
                   <input type="text" className={styles.input} placeholder="Doe" />
                 </div>
-                <div className={`${styles.formGroup} ${styles.fullWidth}`}>
+                <div className={`${styles.field} ${styles.span2}`}>
                   <label className={styles.label}>Phone Number</label>
-                  <input type="tel" className={styles.input} placeholder="+62 812 3456 7890" />
+                  <div className={styles.phoneRow}>
+                    <div className={styles.phoneCode}>
+                      <span>🇮🇩</span> +62 <ChevronDown size={12} />
+                    </div>
+                    <input type="tel" className={`${styles.input} ${styles.phoneInput}`} placeholder="812 3456 7890" />
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* Delivery Details */}
-            <div className={styles.section}>
-              <h2 className={styles.sectionTitle}>
-                <MapPin className={styles.sectionIcon} size={20} /> Delivery Details
-              </h2>
-              <div className={styles.formGrid}>
-                <div className={`${styles.formGroup} ${styles.fullWidth}`}>
+            {/* Delivery */}
+            <div className={styles.card}>
+              <h2 className={styles.cardTitle}><MapPin size={16} className={styles.cardIcon} /> Delivery Details</h2>
+              <div className={styles.grid2}>
+                <div className={`${styles.field} ${styles.span2}`}>
                   <label className={styles.label}>Recipient Name</label>
                   <input type="text" className={styles.input} placeholder="Jane Doe" />
                 </div>
-                <div className={`${styles.formGroup} ${styles.fullWidth}`}>
+                <div className={`${styles.field} ${styles.span2}`}>
                   <label className={styles.label}>Street Address</label>
-                  <input type="text" className={styles.input} placeholder="Jl. Sudirman No. 1" />
+                  <input type="text" className={styles.input} placeholder="Jl. Sudirman No. 1, RT 01/RW 02" />
                 </div>
-                <div className={styles.formGroup}>
+                <div className={styles.field}>
                   <label className={styles.label}>City</label>
-                  <input type="text" className={styles.input} placeholder="Jakarta" />
+                  <select className={`${styles.input} ${styles.select}`}>
+                    <option>Jakarta</option>
+                    <option>Surabaya</option>
+                    <option>Bandung</option>
+                    <option>Bali</option>
+                  </select>
                 </div>
-                <div className={styles.formGroup}>
+                <div className={styles.field}>
                   <label className={styles.label}>Postal Code</label>
                   <input type="text" className={styles.input} placeholder="12190" />
                 </div>
-                <div className={`${styles.formGroup} ${styles.fullWidth}`}>
-                  <label className={styles.label}>Delivery Instructions (Optional)</label>
-                  <input type="text" className={styles.input} placeholder="E.g. Leave at reception" />
+                <div className={`${styles.field} ${styles.span2}`}>
+                  <label className={styles.label}>Delivery Note <span className={styles.optional}>(optional)</span></label>
+                  <input type="text" className={styles.input} placeholder="E.g. Leave at reception, call on arrival" />
                 </div>
               </div>
             </div>
 
-            {/* Delivery Date & Time */}
-            <div className={styles.section}>
-              <h2 className={styles.sectionTitle}>
-                <Calendar className={styles.sectionIcon} size={20} /> Delivery Schedule
-              </h2>
-              <div className={styles.formGrid}>
-                <div className={styles.formGroup}>
+            {/* Schedule */}
+            <div className={styles.card}>
+              <h2 className={styles.cardTitle}><Calendar size={16} className={styles.cardIcon} /> Delivery Schedule</h2>
+              <div className={styles.grid2}>
+                <div className={styles.field}>
                   <label className={styles.label}>Date</label>
                   <input type="date" className={styles.input} />
                 </div>
-                <div className={styles.formGroup}>
+                <div className={styles.field}>
                   <label className={styles.label}>Time Slot</label>
                   <select className={`${styles.input} ${styles.select}`}>
-                    <option>09:00 - 12:00 (Morning)</option>
-                    <option>12:00 - 15:00 (Afternoon)</option>
-                    <option>15:00 - 18:00 (Late Afternoon)</option>
-                    <option>18:00 - 21:00 (Evening)</option>
+                    <option>09:00 – 12:00 (Morning)</option>
+                    <option>12:00 – 15:00 (Afternoon)</option>
+                    <option>15:00 – 18:00 (Late Afternoon)</option>
+                    <option>18:00 – 21:00 (Evening)</option>
                   </select>
                 </div>
-                <div className={`${styles.formGroup} ${styles.fullWidth}`}>
-                  <label className={styles.label}>Card Message</label>
-                  <textarea className={styles.input} rows={3} placeholder="Write a message for the recipient..."></textarea>
+                <div className={`${styles.field} ${styles.span2}`}>
+                  <label className={styles.label}>Gift Message <span className={styles.optional}>(optional)</span></label>
+                  <textarea className={`${styles.input} ${styles.textarea}`} rows={3} placeholder="Write a heartfelt message for the recipient..." />
                 </div>
               </div>
             </div>
 
-            {/* Payment Information */}
-            <div className={styles.section}>
-              <h2 className={styles.sectionTitle}>
-                <CreditCard className={styles.sectionIcon} size={20} /> Payment Method
-              </h2>
-              <div className={styles.paymentOptions}>
-                <label className={`${styles.paymentOption} ${paymentMethod === 'credit_card' ? styles.paymentOptionActive : ''}`}>
-                  <input 
-                    type="radio" 
-                    name="payment" 
-                    value="credit_card" 
-                    className={styles.radioInput} 
-                    checked={paymentMethod === 'credit_card'}
-                    onChange={() => setPaymentMethod('credit_card')}
-                  />
-                  <div className={styles.paymentLabel}>
-                    Credit Card
-                    <div className={styles.paymentIcons}>
-                      <span style={{ fontSize: '0.75rem', color: '#6b7280' }}>Visa, MC, Amex</span>
-                    </div>
-                  </div>
-                </label>
+            {/* Payment */}
+            <div className={styles.card}>
+              <h2 className={styles.cardTitle}><CreditCard size={16} className={styles.cardIcon} /> Payment Method</h2>
 
-                {paymentMethod === 'credit_card' && (
-                  <div className={styles.formGrid} style={{ marginTop: '0.5rem', marginBottom: '0.5rem', marginLeft: '2.25rem' }}>
-                    <div className={`${styles.formGroup} ${styles.fullWidth}`}>
-                      <input type="text" className={styles.input} placeholder="Card Number" />
+              <div className={styles.paymentList}>
+                {[
+                  { id: "bank_transfer", label: "Virtual Account", sub: "BCA · Mandiri · BNI · BRI", emoji: "🏦" },
+                  { id: "ewallet", label: "E-Wallet", sub: "GoPay · OVO · ShopeePay · DANA", emoji: "📱" },
+                  { id: "credit_card", label: "Credit / Debit Card", sub: "Visa · Mastercard · Amex", emoji: "💳" },
+                  { id: "cod", label: "Cash on Delivery", sub: "Pay when your order arrives", emoji: "💵" },
+                ].map((pm) => (
+                  <label
+                    key={pm.id}
+                    className={`${styles.paymentOption} ${paymentMethod === pm.id ? styles.paymentActive : ""}`}
+                  >
+                    <input
+                      type="radio"
+                      name="payment"
+                      value={pm.id}
+                      className={styles.radioHidden}
+                      checked={paymentMethod === pm.id}
+                      onChange={() => setPaymentMethod(pm.id)}
+                    />
+                    <div className={styles.paymentEmoji}>{pm.emoji}</div>
+                    <div className={styles.paymentInfo}>
+                      <span className={styles.paymentLabel}>{pm.label}</span>
+                      <span className={styles.paymentSub}>{pm.sub}</span>
                     </div>
-                    <div className={styles.formGroup}>
-                      <input type="text" className={styles.input} placeholder="MM / YY" />
+                    <div className={`${styles.radioCircle} ${paymentMethod === pm.id ? styles.radioCircleActive : ""}`}>
+                      {paymentMethod === pm.id && <div className={styles.radioDot} />}
                     </div>
-                    <div className={styles.formGroup}>
-                      <input type="text" className={styles.input} placeholder="CVC" />
-                    </div>
-                  </div>
-                )}
-
-                <label className={`${styles.paymentOption} ${paymentMethod === 'bank_transfer' ? styles.paymentOptionActive : ''}`}>
-                  <input 
-                    type="radio" 
-                    name="payment" 
-                    value="bank_transfer" 
-                    className={styles.radioInput}
-                    checked={paymentMethod === 'bank_transfer'}
-                    onChange={() => setPaymentMethod('bank_transfer')}
-                  />
-                  <div className={styles.paymentLabel}>Virtual Account (Bank Transfer)</div>
-                </label>
-                
-                <label className={`${styles.paymentOption} ${paymentMethod === 'ewallet' ? styles.paymentOptionActive : ''}`}>
-                  <input 
-                    type="radio" 
-                    name="payment" 
-                    value="ewallet" 
-                    className={styles.radioInput}
-                    checked={paymentMethod === 'ewallet'}
-                    onChange={() => setPaymentMethod('ewallet')}
-                  />
-                  <div className={styles.paymentLabel}>GoPay / OVO / ShopeePay</div>
-                </label>
+                  </label>
+                ))}
               </div>
-            </div>
 
-          </form>
-        </div>
-
-        {/* Order Summary Area */}
-        <div className={styles.summaryArea}>
-          <div className={styles.summaryBox}>
-            <h2 className={`${styles.summaryTitle} font-serif`}>Order Summary</h2>
-            
-            <div className={styles.summaryItems}>
-              {cartItems.map(item => (
-                <div key={item.id} className={styles.summaryItem}>
-                  <div className={styles.itemImageWrapper}>
-                    <img src={item.img} alt={item.name} className={styles.itemImage} />
-                    <span className={styles.itemQty}>{item.qty}</span>
+              {paymentMethod === "credit_card" && (
+                <div className={styles.cardFields}>
+                  <div className={`${styles.field} ${styles.span2}`}>
+                    <label className={styles.label}>Card Number</label>
+                    <input type="text" className={styles.input} placeholder="1234 5678 9012 3456" maxLength={19} />
                   </div>
-                  <div className={styles.itemDetails}>
-                    <h4 className={styles.itemName}>{item.name}</h4>
-                    <p className={styles.itemMeta}>{item.size}</p>
+                  <div className={styles.field}>
+                    <label className={styles.label}>Expiry</label>
+                    <input type="text" className={styles.input} placeholder="MM / YY" />
                   </div>
-                  <div className={styles.itemPrice}>
-                    {formatPrice(item.price * item.qty)}
+                  <div className={styles.field}>
+                    <label className={styles.label}>CVC</label>
+                    <input type="text" className={styles.input} placeholder="123" maxLength={4} />
                   </div>
                 </div>
-              ))}
+              )}
             </div>
-
-            <div className={styles.summaryRow}>
-              <span>Subtotal</span>
-              <span>{formatPrice(subtotal)}</span>
-            </div>
-            <div className={styles.summaryRow}>
-              <span>Delivery</span>
-              <span>{formatPrice(deliveryFee)}</span>
-            </div>
-            <div className={styles.summaryRow}>
-              <span>Taxes (11%)</span>
-              <span>{formatPrice(tax)}</span>
-            </div>
-            
-            <div className={styles.summaryTotal}>
-              <span>Total</span>
-              <span>{formatPrice(total)}</span>
-            </div>
-
-            <button type="button" className={styles.placeOrderBtn}>
-              Place Order <Check size={16} />
-            </button>
-            <p className={styles.securityNote}>
-              <Lock size={12} /> Secure encrypted payment
-            </p>
           </div>
-        </div>
 
+          {/* Right — Summary */}
+          <div className={styles.summaryCol}>
+            <div className={styles.summaryBox}>
+              <h2 className={`${styles.summaryTitle} font-serif`}>Order Summary</h2>
+
+              <div className={styles.summaryItems}>
+                {STATIC_ITEMS.map((item) => (
+                  <div key={item.id} className={styles.summaryItem}>
+                    <div className={styles.summaryImgBox}>
+                      <img src={item.img} alt={item.name} className={styles.summaryImg} />
+                      <span className={styles.summaryQty}>{item.qty}</span>
+                    </div>
+                    <div className={styles.summaryItemInfo}>
+                      <p className={styles.summaryItemName}>{item.name}</p>
+                      <p className={styles.summaryItemMeta}>{item.variant}</p>
+                    </div>
+                    <p className={styles.summaryItemPrice}>{fmt(item.price * item.qty)}</p>
+                  </div>
+                ))}
+              </div>
+
+              <div className={styles.summaryRows}>
+                <div className={styles.summaryRow}><span>Subtotal</span><span>{fmt(subtotal)}</span></div>
+                <div className={styles.summaryRow}><span>Delivery</span><span>{fmt(delivery)}</span></div>
+                <div className={styles.summaryRow}><span>Discount</span><span className={styles.green}>— Rp 0</span></div>
+              </div>
+
+              <div className={styles.summaryTotal}>
+                <span>Total</span>
+                <span>{fmt(total)}</span>
+              </div>
+
+              <button className={styles.placeOrderBtn}>
+                <Lock size={14} /> Place Order
+              </button>
+
+              <p className={styles.secureNote}>
+                <Lock size={11} /> 256-bit SSL encrypted &amp; secure checkout
+              </p>
+            </div>
+
+            {/* Delivery promise */}
+            <div className={styles.promiseBox}>
+              <Flower2 size={16} className={styles.promiseIcon} />
+              <div>
+                <p className={styles.promiseTitle}>Freshness Guaranteed</p>
+                <p className={styles.promiseSub}>All bouquets are prepared fresh on the day of delivery.</p>
+              </div>
+            </div>
+          </div>
+
+        </div>
       </div>
-    </section>
+    </div>
   );
 }

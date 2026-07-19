@@ -5,10 +5,11 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { SlidersHorizontal, ArrowUpDown, X, ShoppingBag, Eye, Heart } from "lucide-react";
 import { fetchCategories, fetchProducts } from "@/lib/api";
+import FlowerLoader from "@/components/shared/FlowerLoader";
 import styles from "./PLPContent.module.css";
 
 interface PLPContentProps {
-  type: "tag" | "category" | "city" | string;
+  type: "tag" | "category" | "city" | "search" | "all" | string;
   value: string;
 }
 
@@ -27,7 +28,7 @@ export default function PLPContent({ type, value }: PLPContentProps) {
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
   const [modalOpen, setModalOpen] = useState(false);
-  const [modalTab, setModalTab] = useState<"filter" | "sort">("filter");
+  const [modalTab, setModalTab] = useState<"sort" | "category" | "tags">("sort");
 
   const [page, setPage] = useState(1);
   const PER_PAGE = 12;
@@ -57,6 +58,15 @@ export default function PLPContent({ type, value }: PLPContentProps) {
 
   const baseFiltered = useCallback(() => {
     if (!allProducts.length) return [];
+    if (type === "search" && value.trim()) {
+      const q = value.toLowerCase().trim();
+      return allProducts.filter((p) =>
+        p.name?.toLowerCase().includes(q) ||
+        p.description?.toLowerCase().includes(q) ||
+        p.tags?.some((t: any) => t?.name?.toLowerCase().includes(q))
+      );
+    }
+    if (type === "all" || type === "search") return allProducts;
     if (type === "tag") {
       return allProducts.filter((p) =>
         p.tags?.some((t: any) => t?.name?.toLowerCase().trim() === value.toLowerCase().trim())
@@ -114,16 +124,21 @@ export default function PLPContent({ type, value }: PLPContentProps) {
   };
 
   const activeFilterCount = selectedCategories.length + selectedTags.length + (sortOption !== "Recommended" ? 1 : 0);
-  const breadcrumbLabel = type === "city" ? `Flowers in ${value}` : value;
+  const breadcrumbLabel =
+    type === "city" ? `Flowers in ${value}` :
+    type === "search" && value ? `Search: "${value}"` :
+    type === "all" ? "All Collections" :
+    value;
 
   if (loading) return (
-    <div style={{ height: "60vh", display: "flex", justifyContent: "center", alignItems: "center", color: "#6b7280" }}>
-      Loading Collection...
+    <div style={{ minHeight: "70vh", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", gap: "1rem", background: "var(--color-cream)" }}>
+      <FlowerLoader size={120} />
+      <p style={{ fontSize: "0.75rem", color: "var(--color-olive)", letterSpacing: "0.1em", textTransform: "uppercase", fontWeight: 600 }}>Loading Collection...</p>
     </div>
   );
 
   if (error) return (
-    <div style={{ height: "60vh", display: "flex", justifyContent: "center", alignItems: "center", color: "#dc2626" }}>
+    <div style={{ minHeight: "60vh", display: "flex", justifyContent: "center", alignItems: "center", color: "#dc2626", fontSize: "0.875rem" }}>
       {error}
     </div>
   );
@@ -138,6 +153,8 @@ export default function PLPContent({ type, value }: PLPContentProps) {
             <span className={styles.sep}>/</span>
             {type === "city" ? (
               <><Link href="/delivery-cities" className={styles.breadcrumbLink}>Cities</Link><span className={styles.sep}>/</span></>
+            ) : type === "search" || type === "all" ? (
+              <><Link href="/collections" className={styles.breadcrumbLink}>Collections</Link><span className={styles.sep}>/</span></>
             ) : (
               <><span className={styles.breadcrumbLink} style={{ textTransform: "capitalize" }}>{type}</span><span className={styles.sep}>/</span></>
             )}
@@ -158,7 +175,7 @@ export default function PLPContent({ type, value }: PLPContentProps) {
           )}
         </p>
         <div className={styles.toolbarActions}>
-          <button className={`${styles.tagBtn} ${activeFilterCount > 0 ? styles.tagBtnActive : ""}`} onClick={() => { setModalTab("filter"); setModalOpen(true); }}>
+          <button className={`${styles.tagBtn} ${activeFilterCount > 0 ? styles.tagBtnActive : ""}`} onClick={() => { setModalTab("category"); setModalOpen(true); }}>
             <SlidersHorizontal size={14} /> Filter
             {activeFilterCount > 0 && <span className={styles.badge}>{activeFilterCount}</span>}
           </button>
@@ -240,12 +257,12 @@ export default function PLPContent({ type, value }: PLPContentProps) {
                   <span>Sort By</span>
                   {sortOption !== "Recommended" && <span className={styles.navDot} />}
                 </button>
-                <button className={`${styles.filterNavItem} ${modalTab === "category" ? styles.filterNavItemActive : ""}`} onClick={() => setModalTab("category" as any)}>
+                <button className={`${styles.filterNavItem} ${modalTab === "category" ? styles.filterNavItemActive : ""}`} onClick={() => setModalTab("category")}>
                   <SlidersHorizontal size={14} />
                   <span>Category</span>
                   {selectedCategories.length > 0 && <span className={styles.navCount}>{selectedCategories.length}</span>}
                 </button>
-                <button className={`${styles.filterNavItem} ${modalTab === "tags" ? styles.filterNavItemActive : ""}`} onClick={() => setModalTab("tags" as any)}>
+                <button className={`${styles.filterNavItem} ${modalTab === "tags" ? styles.filterNavItemActive : ""}`} onClick={() => setModalTab("tags")}>
                   <SlidersHorizontal size={14} />
                   <span>Tags</span>
                   {selectedTags.length > 0 && <span className={styles.navCount}>{selectedTags.length}</span>}
@@ -268,7 +285,7 @@ export default function PLPContent({ type, value }: PLPContentProps) {
                     </div>
                   </>
                 )}
-                {(modalTab as string) === "category" && (
+                {modalTab === "category" && (
                   <>
                     <p className={styles.panelLabel}>Category</p>
                     <div className={styles.checkList}>
@@ -282,7 +299,7 @@ export default function PLPContent({ type, value }: PLPContentProps) {
                     </div>
                   </>
                 )}
-                {(modalTab as string) === "tags" && (
+                {modalTab === "tags" && (
                   <>
                     <p className={styles.panelLabel}>Tags</p>
                     <div className={styles.checkList}>

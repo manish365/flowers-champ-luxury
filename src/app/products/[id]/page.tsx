@@ -1,17 +1,212 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { useState } from "react";
-import { Star, Heart, MapPin, Info, Minus, Plus, ShoppingBag, Flower2, Truck, Flower, Eye, Play } from "lucide-react";
+import { Star, Heart, MapPin, Minus, Plus, ShoppingBag, Flower2, Truck, Flower, Eye } from "lucide-react";
+import { useDispatch, useSelector } from "react-redux";
+import { RootState } from "@/lib/store";
+import { addProduct, updateCartCity, updateWorkingCartAddons, toggleAddonModal, updateWorkingCart } from "@/lib/store/reducers/cart";
+import { toggleFavProduct } from "@/lib/store/reducers/user";
+import { fetchProduct, fetchProductDetailsMeta, fetchAddonProducts } from "@/lib/api";
+import FlowerLoader from "@/components/shared/FlowerLoader";
 import styles from "./page.module.css";
 
 export default function ProductPDP() {
-  const [qty, setQty] = useState(1);
-  const [size, setSize] = useState('premium');
+  const params = useParams();
+  const router = useRouter();
+  const dispatch = useDispatch();
+  const id = params?.id as string;
 
-  const handleQtyChange = (delta: number) => {
-    setQty(prev => Math.max(1, prev + delta));
+  const { cartItems, workingCart, metaData } = useSelector((s: RootState) => s.cart);
+  const { favProducts } = useSelector((s: RootState) => s.user);
+
+  const [product, setProduct] = useState<any>(null);
+  const [cities, setCities] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  // selections
+  const [selectedCity, setSelectedCity] = useState("");
+  const [selectedCityName, setSelectedCityName] = useState("");
+  const [selectedVariant, setSelectedVariant] = useState("classic");
+  const [variantPrice, setVariantPrice] = useState(0);
+  const [deliveryPrice, setDeliveryPrice] = useState(0);
+
+  // delivery date/slot
+  const [deliveryDate, setDeliveryDate] = useState("");
+  const [selectedSlot, setSelectedSlot] = useState<any>(null);
+  const [slots, setSlots] = useState<any[]>([]);
+  const [showSlots, setShowSlots] = useState(false);
+
+  // addon modal
+  const [showAddonModal, setShowAddonModal] = useState(false);
+  const [addons, setAddons] = useState<any[]>([]);
+  const [selectedAddons, setSelectedAddons] = useState<Record<string, number>>({});
+
+  // tabs
+  const [activeTab, setActiveTab] = useState<"description" | "care" | "delivery">("description");
+
+  const isFav = favProducts?.includes(id);
+  const inCart = cartItems.some((c: any) => c.id === id);
+
+  useEffect(() => {
+    if (!id) return;
+    async function load() {
+      try {
+        setLoading(true);
+        const [prodRes, metaRes] = await Promise.all([
+          fetchProduct(id),
+          fetchProductDetailsMeta(),
+        ]);
+        if (prodRes?.success) {
+          const p = prodRes.results;
+          setProduct(p);
+          setVariantPrice(+p.countryPrice?.price?.standard?.currentPrice || 0);
+        } else {
+          setError("Product not found.");
+        }
+        if (metaRes?.success) {
+          const sorted = (metaRes.results?.area || []).sort((a: any, b: any) =>
+            a.name > b.name ? 1 : -1
+          );
+          setCities(sorted);
+          setSlots(metaRes.results?.deliverySlot || []);
+        }
+      } catch {
+        setError("Failed to load product. Please try again.");
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
+  }, [id]);
+
+  const handleCityChange = (cityId: string) => {
+    setSelectedCity(cityId);
+    const city = cities.find((c) => c._id === cityId);
+    setSelectedCityName(city?.name || "");
+    setShowSlots(false);
+    setSelectedSlot(null);
+    setDeliveryDate("");
+
+    if (!product?.cityPrice?.length) return;
+    const cp = product.cityPrice.find((c: any) => c._id === cityId);
+    if (cp) {
+      setVariantPrice(+(cp.price?.standard?.currentPrice || 0));
+      setDeliveryPrice(+(cp.price?.standard?.deliveryPrice || 0));
+    } else {
+      setVariantPrice(+product.countryPrice?.price?.standard?.currentPrice || 0);
+      setDeliveryPrice(100000);
+    }
   };
+
+  const handleSlotSelect = (slot: any) => {
+    setSelectedSlot(slot);
+    setDeliveryDate(new Date().toISOString().split("T")[0]);
+    setShowSlots(false);
+  };
+
+  const handleAddToCart = async () => {
+    if (!selectedCity) { setError("Please select a city first."); return; }
+    if (!selectedSlot) { setError("Please select a delivery slot first."); return; }
+    setError("");
+
+    // load addons
+    try {
+      const addonRes = await fetchAddonProducts();
+      const list = addonRes?.results || product?.related?.products || [];
+      setAddons(list);
+    } catch {
+      setAddons(product?.related?.products || []);
+    }
+
+    dispatch(updateWorkingCart({ variant: selectedVariant, price: variantPrice, city: selectedCity }));
+    setShowAddonModal(true);
+  };
+
+  const confirmAddToCart = (addonList: any[] = []) => {
+    const cartProduct = {
+      id: product._id,
+      code: product.code,
+      name: product.name,
+      thumb: product.image?.default,
+      qty: 1,
+      variant: selectedVariant,
+      variantPrice,
+      glassVaseAdded: false,
+      glassVasePrice: 0,
+      eggLess: false,
+      eggLessPrice: 0,
+      delivery: {
+        type: selectedSlot?.type || "STANDARD",
+        date: deliveryDate,
+        time: selectedSlot,
+        price: deliveryPrice,
+      },
+      giftOption: { message: "", messageType: "", occaision: "", senderName: "", errors: {} },
+      addOns: addonList,
+      addOnQty: addonList.reduce((s: number, a: any) => s + (a.qty || 0), 0),
+      addOnPrice: addonList.reduce((s: number, a: any) => s + (a.unitPrice || 0) * (a.qty || 0), 0),
+      cityId: selectedCity,
+      cityName: selectedCityName,
+    };
+    dispatch(updateCartCity(selectedCity));
+    dispatch(addProduct({ product: cartProduct, qty: 1 }));
+    dispatch(updateWorkingCartAddons());
+    setShowAddonModal(false);
+    router.push("/cart");
+  };
+
+  const toggleAddon = (addon: any) => {
+    setSelectedAddons((prev) => {
+      const next = { ...prev };
+      if (next[addon._id]) delete next[addon._id];
+      else next[addon._id] = 1;
+      return next;
+    });
+  };
+
+  const changeAddonQty = (id: string, delta: number) => {
+    setSelectedAddons((prev) => {
+      const next = { ...prev };
+      const newQty = (next[id] || 0) + delta;
+      if (newQty <= 0) delete next[id];
+      else next[id] = newQty;
+      return next;
+    });
+  };
+
+  const buildAddonList = () =>
+    Object.entries(selectedAddons).map(([addonId, qty]) => {
+      const a = addons.find((x) => x._id === addonId);
+      return { _id: addonId, qty, unitPrice: +a?.price || 0, image: a?.image, name: a?.name };
+    });
+
+  const formatPrice = (p: number) =>
+    new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(p);
+
+  // ── Loading ──────────────────────────────────────────────────────────────
+  if (loading) return (
+    <div style={{ minHeight: "80vh", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", gap: "1rem", background: "var(--color-cream)" }}>
+      <FlowerLoader size={130} />
+      <p style={{ fontSize: "0.75rem", color: "var(--color-olive)", letterSpacing: "0.1em", textTransform: "uppercase", fontWeight: 600 }}>Loading Product...</p>
+    </div>
+  );
+
+  if (error && !product) return (
+    <div style={{ minHeight: "60vh", display: "flex", justifyContent: "center", alignItems: "center", color: "#dc2626", fontSize: "0.875rem" }}>
+      {error}
+    </div>
+  );
+
+  if (!product) return null;
+
+  const price = variantPrice || +product.countryPrice?.price?.standard?.currentPrice || 0;
+  const oldPrice = +product.countryPrice?.price?.standard?.oldPrice || 0;
+  const rating = product.review?.rating || 5;
+  const reviewCount = product.review?.count || 0;
+  const standardSlots = slots.filter((s) => s.type === "STANDARD");
 
   return (
     <>
@@ -20,241 +215,240 @@ export default function ProductPDP() {
         <div className={`container ${styles.breadcrumbs}`}>
           <Link href="/" className={styles.breadcrumbLink}>Home</Link>
           <span>/</span>
-          <Link href="/collections" className={styles.breadcrumbLink}>Flowers</Link>
+          <Link href="/collections" className={styles.breadcrumbLink}>Collections</Link>
           <span>/</span>
-          <Link href="/collections" className={styles.breadcrumbLink}>Roses</Link>
-          <span>/</span>
-          <span className={styles.breadcrumbActive}>Blush Romance</span>
+          <span className={styles.breadcrumbActive}>{product.name}</span>
         </div>
       </div>
 
-      {/* Main Product Section */}
+      {/* Main Section */}
       <section className={styles.mainSection}>
         <div className={`container ${styles.productLayout}`}>
-          
-          {/* Product Images (Left) */}
+
+          {/* Image */}
           <div className={styles.imageGallery}>
-            {/* Main Image */}
             <div className={styles.mainImageWrapper}>
-              <span className={styles.badge}>Best Seller</span>
-              <button className={styles.favButton}>
-                <Heart size={16} />
+              {product.extraTags?.some((t: any) => t?.name) && (
+                <span className={styles.badge}>{product.extraTags[0].name}</span>
+              )}
+              <button
+                className={styles.favButton}
+                onClick={() => dispatch(toggleFavProduct({ id }))}
+                style={{ color: isFav ? "var(--color-gold)" : undefined }}
+              >
+                <Heart size={16} fill={isFav ? "currentColor" : "none"} />
               </button>
-              <img 
-                src="https://images.unsplash.com/photo-1591886960571-74d43a9d4166?q=80&w=800&auto=format&fit=crop" 
-                className={styles.mainImage} 
-                alt="Blush Romance Bouquet" 
-              />
-            </div>
-            
-            {/* Thumbnails */}
-            <div className={styles.thumbnails}>
-              <button className={`${styles.thumbnailBtn} ${styles.thumbnailActive}`}>
-                <img src="https://images.unsplash.com/photo-1591886960571-74d43a9d4166?q=80&w=200&auto=format&fit=crop" className={styles.thumbnailImg} alt="Thumbnail 1" />
-              </button>
-              <button className={styles.thumbnailBtn}>
-                <img src="https://images.unsplash.com/photo-1526047932273-341f2a7631f9?q=80&w=200&auto=format&fit=crop" className={styles.thumbnailImg} alt="Thumbnail 2" />
-              </button>
-              <button className={styles.thumbnailBtn}>
-                <img src="https://images.unsplash.com/photo-1582794543139-8ac9cb0f7b11?q=80&w=200&auto=format&fit=crop" className={styles.thumbnailImg} alt="Thumbnail 3" />
-              </button>
-              <button className={styles.thumbnailBtn} style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <img src="https://images.unsplash.com/photo-1509005084666-3cbacb4fa3ab?q=80&w=200&auto=format&fit=crop" className={styles.thumbnailImg} style={{ opacity: 0.5 }} alt="Thumbnail 4" />
-                <Play size={32} style={{ position: 'absolute', fill: 'var(--color-dark)', color: 'var(--color-dark)' }} />
-              </button>
+              <img src={product.image?.default} className={styles.mainImage} alt={product.name} />
             </div>
           </div>
 
-          {/* Product Details (Right) */}
+          {/* Details */}
           <div className={styles.productDetails}>
-            <div style={{ marginBottom: '1.5rem' }}>
-              <div className={styles.reviews}>
-                <div className={styles.stars}>
-                  <Star size={16} fill="currentColor" />
-                  <Star size={16} fill="currentColor" />
-                  <Star size={16} fill="currentColor" />
-                  <Star size={16} fill="currentColor" />
-                  <Star size={16} fill="currentColor" />
-                </div>
-                <span className={styles.reviewLink}>(128 Reviews)</span>
+            {/* Rating */}
+            <div className={styles.reviews}>
+              <div className={styles.stars}>
+                {[1,2,3,4,5].map((s) => (
+                  <Star key={s} size={14} fill={s <= Math.round(rating) ? "currentColor" : "none"} />
+                ))}
               </div>
-              <h1 className={`${styles.title} font-serif`}>Blush Romance</h1>
-              <p className={styles.description}>
-                A delicate blend of premium blush pink roses and elegant white lilies, carefully arranged to capture the essence of romance.
-              </p>
-              <p className={styles.price}>Rp 850.000</p>
+              <span className={styles.reviewLink}>({reviewCount} Reviews)</span>
             </div>
 
-            {/* Options: Size */}
-            <div className={styles.optionsSection}>
-              <div className={styles.optionsHeader}>
-                <h3 className={styles.optionsLabel}>Select Size</h3>
-                <button className={styles.sizeGuide}>Size Guide</button>
-              </div>
-              <div className={styles.sizeGrid}>
-                <label style={{ cursor: 'pointer', position: 'relative' }}>
-                  <input type="radio" name="size" className={styles.sizeInput} checked={size === 'standard'} onChange={() => setSize('standard')} />
-                  <div className={styles.sizeCard}>
-                    <p className={styles.sizeName}>Standard</p>
-                    <p className={styles.sizeDesc}>12 Stems</p>
-                  </div>
-                </label>
-                <label style={{ cursor: 'pointer', position: 'relative' }}>
-                  <input type="radio" name="size" className={styles.sizeInput} checked={size === 'premium'} onChange={() => setSize('premium')} />
-                  <div className={styles.sizeCard}>
-                    <p className={styles.sizeName}>Premium</p>
-                    <p className={styles.sizeDesc}>24 Stems <span className={styles.sizePriceAdd}>+ Rp 450k</span></p>
-                  </div>
-                </label>
-                <label style={{ cursor: 'pointer', position: 'relative' }}>
-                  <input type="radio" name="size" className={styles.sizeInput} checked={size === 'luxury'} onChange={() => setSize('luxury')} />
-                  <div className={styles.sizeCard}>
-                    <p className={styles.sizeName}>Luxury</p>
-                    <p className={styles.sizeDesc}>36 Stems <span className={styles.sizePriceAdd}>+ Rp 850k</span></p>
-                  </div>
-                </label>
-              </div>
+            <h1 className={`${styles.title} font-serif`}>{product.name}</h1>
+            <p className={styles.description}>{product.description}</p>
+
+            <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "1.5rem" }}>
+              <p className={styles.price}>{formatPrice(price)}</p>
+              {oldPrice > 0 && (
+                <p style={{ fontSize: "0.875rem", color: "#9ca3af", textDecoration: "line-through" }}>{formatPrice(oldPrice)}</p>
+              )}
             </div>
 
-            {/* Delivery Check */}
+            {/* City Select */}
             <div className={styles.deliveryCheck}>
               <h3 className={styles.deliveryTitle}>
-                <MapPin size={16} className="text-gold" /> Check Delivery Availability
+                <MapPin size={14} /> Select Delivery City
               </h3>
-              <div className={styles.deliveryInputGroup}>
-                <input type="text" placeholder="Enter Pincode or Area" className={styles.deliveryInput} />
-                <button className={styles.deliveryBtn}>Check</button>
-              </div>
-              <p className={styles.deliveryInfo}>
-                <Info size={12} /> Same day delivery available for orders placed before 4 PM.
-              </p>
+              <select
+                className={styles.deliveryInput}
+                value={selectedCity}
+                onChange={(e) => handleCityChange(e.target.value)}
+                style={{ width: "100%", cursor: "pointer" }}
+              >
+                <option value="">-- Choose a city --</option>
+                {cities.map((c) => (
+                  <option key={c._id} value={c._id}>{c.name}</option>
+                ))}
+              </select>
             </div>
 
-            {/* Add to Cart Actions */}
-            <div className={styles.actionGroup}>
-              {/* Quantity */}
-              <div className={styles.qtySelector}>
-                <button className={styles.qtyBtn} onClick={() => handleQtyChange(-1)}>
-                  <Minus size={16} />
-                </button>
-                <input type="text" value={qty} className={styles.qtyInput} readOnly />
-                <button className={styles.qtyBtn} onClick={() => handleQtyChange(1)}>
-                  <Plus size={16} />
-                </button>
+            {/* Delivery Slot */}
+            {selectedCity && (
+              <div className={styles.deliveryCheck} style={{ marginTop: "1rem" }}>
+                <h3 className={styles.deliveryTitle}>
+                  <Truck size={14} /> Select Delivery Slot
+                </h3>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", marginTop: "0.5rem" }}>
+                  {standardSlots.map((slot: any) => (
+                    <button
+                      key={slot._id}
+                      onClick={() => handleSlotSelect(slot)}
+                      style={{
+                        padding: "0.4rem 0.75rem",
+                        fontSize: "0.75rem",
+                        border: `1px solid ${selectedSlot?._id === slot._id ? "var(--color-gold)" : "#e5e7eb"}`,
+                        borderRadius: "0.25rem",
+                        background: selectedSlot?._id === slot._id ? "rgba(200,169,107,0.15)" : "white",
+                        color: selectedSlot?._id === slot._id ? "var(--color-gold)" : "var(--color-dark)",
+                        cursor: "pointer",
+                        fontWeight: selectedSlot?._id === slot._id ? 600 : 400,
+                      }}
+                    >
+                      {slot.from} – {slot.to}
+                    </button>
+                  ))}
+                </div>
               </div>
-              
-              {/* Add to Cart */}
-              <button className={styles.addToCartBig}>
-                <ShoppingBag size={16} /> Add To Cart
-              </button>
+            )}
+
+            {error && (
+              <p style={{ color: "#dc2626", fontSize: "0.8rem", marginTop: "0.5rem" }}>{error}</p>
+            )}
+
+            {/* Actions */}
+            <div className={styles.actionGroup} style={{ marginTop: "1.5rem" }}>
+              {!inCart ? (
+                <button className={styles.addToCartBig} onClick={handleAddToCart}>
+                  <ShoppingBag size={16} /> Add To Cart
+                </button>
+              ) : (
+                <button className={styles.addToCartBig} onClick={() => router.push("/cart")}
+                  style={{ background: "var(--color-gold)" }}>
+                  <ShoppingBag size={16} /> Go To Cart
+                </button>
+              )}
             </div>
 
-            {/* Buy Now Button */}
-            <button className={styles.buyNowBtn}>
+            <button className={styles.buyNowBtn} onClick={handleAddToCart}>
               Buy It Now
             </button>
 
             {/* Features */}
             <div className={styles.featuresGrid}>
               <div className={styles.featureItem}>
-                <div className={styles.featureIconBox}>
-                  <Flower2 size={20} />
-                </div>
+                <div className={styles.featureIconBox}><Flower2 size={20} /></div>
                 <div>
                   <h4 className={styles.featureTitle}>Fresh Blooms</h4>
                   <p className={styles.featureDesc}>Handpicked daily</p>
                 </div>
               </div>
               <div className={styles.featureItem}>
-                <div className={styles.featureIconBox}>
-                  <Truck size={20} />
-                </div>
+                <div className={styles.featureIconBox}><Truck size={20} /></div>
                 <div>
                   <h4 className={styles.featureTitle}>Same Day</h4>
                   <p className={styles.featureDesc}>Express Delivery</p>
                 </div>
               </div>
             </div>
-
           </div>
         </div>
       </section>
 
-      {/* Details Tabs */}
+      {/* Tabs */}
       <section className={styles.tabsSection}>
         <div className={`container ${styles.tabsContainer}`}>
-          {/* Tab Headers */}
           <div className={styles.tabHeaders}>
-            <button className={`${styles.tabBtn} ${styles.tabActive}`}>Description</button>
-            <button className={styles.tabBtn}>Care Guide</button>
-            <button className={styles.tabBtn}>Delivery</button>
-          </div>
-          
-          {/* Tab Content */}
-          <div className={styles.tabContent}>
-            <p className={styles.tabText}>
-              The Blush Romance bouquet is a timeless expression of affection. Featuring our finest, hand-selected blush pink roses intertwined with fragrant white lilies and delicate eucalyptus greens. This arrangement is carefully designed by our master florists to create a soft, romantic palette that speaks volumes without saying a word.
-            </p>
-            <p className={styles.tabText}>
-              Perfect for anniversaries, Valentine's Day, or simply to remind someone special how much they mean to you. Each bouquet comes wrapped in our signature premium paper and finished with a silk ribbon.
-            </p>
-            <ul className={styles.tabList}>
-              <li>12-36 Premium Blush Pink Roses</li>
-              <li>White Oriental Lilies</li>
-              <li>Fresh Eucalyptus & Seasonal Greens</li>
-              <li>Signature Luxury Wrapping</li>
-              <li>Complimentary Gift Card</li>
-            </ul>
-          </div>
-        </div>
-      </section>
-
-      {/* You May Also Like */}
-      <section className={styles.relatedSection}>
-        <div className="container">
-          <div className={styles.sectionHeader}>
-            <h2 className={`${styles.sectionTitle} font-serif`}>YOU MAY ALSO LIKE</h2>
-            <div className={styles.sectionDivider}>
-              <div className={styles.dividerLine}></div>
-              <Flower size={16} />
-              <div className={styles.dividerLine}></div>
-            </div>
-          </div>
-
-          {/* Product Grid */}
-          <div className={styles.relatedGrid}>
-            {[
-              { name: 'Pure Passion', price: 'Rp 950.000', img: 'https://images.unsplash.com/photo-1587314168485-3236d6710814?q=80&w=400&auto=format&fit=crop', badge: null },
-              { name: 'Graceful Whites', price: 'Rp 875.000', img: 'https://images.unsplash.com/photo-1563241527-3004b7be0ffd?q=80&w=400&auto=format&fit=crop', badge: { text: "New", class: styles.badgeDark } },
-              { name: 'Classic Red Roses', price: 'Rp 680.000', img: 'https://images.unsplash.com/photo-1546842931-886c185b4c8c?q=80&w=400&auto=format&fit=crop', badge: { text: "-15%", class: styles.badgeRed }, extraClass: styles.hiddenMd },
-              { name: 'Elegant Charm', price: 'Rp 990.000', img: 'https://images.unsplash.com/photo-1508611181146-5f128e4612e5?q=80&w=400&auto=format&fit=crop', badge: null, extraClass: styles.hiddenMd },
-            ].map((product, i) => (
-              <div key={i} className={`${styles.productCard} ${product.extraClass || ''}`}>
-                {product.badge && (
-                  <div className={styles.badges}>
-                    <span className={`${styles.badge} ${product.badge.class}`}>{product.badge.text}</span>
-                  </div>
-                )}
-                <div className={styles.relatedImageWrapper}>
-                  <img src={product.img} className={styles.relatedImage} alt={product.name} />
-                  <div className={styles.relatedOverlayActions}>
-                    <button className={styles.relatedActionBtn}>
-                      <Eye size={16} />
-                    </button>
-                    <button className={styles.relatedActionBtn}>
-                      <Heart size={16} />
-                    </button>
-                  </div>
-                </div>
-                <div className={styles.relatedProductInfo}>
-                  <h5 className={styles.relatedProductTitle}>{product.name}</h5>
-                  <p className={styles.relatedProductPrice}>{product.price}</p>
-                </div>
-              </div>
+            {(["description", "care", "delivery"] as const).map((tab) => (
+              <button
+                key={tab}
+                className={`${styles.tabBtn} ${activeTab === tab ? styles.tabActive : ""}`}
+                onClick={() => setActiveTab(tab)}
+                style={{ textTransform: "capitalize" }}
+              >
+                {tab === "care" ? "Care Guide" : tab}
+              </button>
             ))}
           </div>
+          <div className={styles.tabContent}>
+            {activeTab === "description" && (
+              <>
+                <p className={styles.tabText}>{product.description || "Premium quality flowers, carefully arranged by our expert florists."}</p>
+                <p className={styles.tabText}>Product Code: #{product.code}</p>
+              </>
+            )}
+            {activeTab === "care" && (
+              <ul className={styles.tabList}>
+                <li>Keep flowers in a cool, shaded area away from direct sunlight.</li>
+                <li>Change water every 2 days and trim stems at an angle.</li>
+                <li>Remove wilted petals to extend the life of the arrangement.</li>
+                <li>Avoid placing near fruits or heat sources.</li>
+              </ul>
+            )}
+            {activeTab === "delivery" && (
+              <ul className={styles.tabList}>
+                <li>Same-day delivery available for orders placed before 4 PM.</li>
+                <li>Delivery available across all major cities in Indonesia.</li>
+                <li>Midnight delivery available in select cities.</li>
+                <li>Fragile items are packed with extra care.</li>
+              </ul>
+            )}
+          </div>
         </div>
       </section>
+
+      {/* Addon Modal */}
+      {showAddonModal && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 1000, display: "flex", alignItems: "flex-end", justifyContent: "center" }}
+          onClick={() => setShowAddonModal(false)}>
+          <div style={{ background: "white", width: "100%", maxWidth: "560px", borderRadius: "1rem 1rem 0 0", padding: "1.5rem", maxHeight: "80vh", overflowY: "auto" }}
+            onClick={(e) => e.stopPropagation()}>
+            <h3 style={{ fontSize: "1rem", fontWeight: 700, marginBottom: "1rem", color: "var(--color-dark)" }}>Add Gifts & Extras</h3>
+
+            {addons.length > 0 ? (
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: "0.75rem", marginBottom: "1.5rem" }}>
+                {addons.map((a: any) => (
+                  <div key={a._id}
+                    style={{ border: `1px solid ${selectedAddons[a._id] ? "var(--color-gold)" : "#e5e7eb"}`, borderRadius: "0.5rem", padding: "0.75rem", textAlign: "center", cursor: "pointer", background: selectedAddons[a._id] ? "rgba(200,169,107,0.08)" : "white" }}
+                    onClick={() => toggleAddon(a)}>
+                    <img src={a.image} alt={a.name} style={{ width: "100%", aspectRatio: "1", objectFit: "cover", borderRadius: "0.25rem", marginBottom: "0.4rem" }} />
+                    <p style={{ fontSize: "0.7rem", fontWeight: 600, color: "var(--color-dark)", marginBottom: "0.2rem" }}>{a.name}</p>
+                    <p style={{ fontSize: "0.65rem", color: "#6b7280" }}>{formatPrice(+a.price)}</p>
+                    {selectedAddons[a._id] && (
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem", marginTop: "0.4rem" }}
+                        onClick={(e) => e.stopPropagation()}>
+                        <button onClick={() => changeAddonQty(a._id, -1)} style={{ width: "20px", height: "20px", border: "1px solid #e5e7eb", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.75rem" }}>−</button>
+                        <span style={{ fontSize: "0.75rem", fontWeight: 600 }}>{selectedAddons[a._id]}</span>
+                        <button onClick={() => changeAddonQty(a._id, 1)} style={{ width: "20px", height: "20px", border: "1px solid #e5e7eb", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.75rem" }}>+</button>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p style={{ fontSize: "0.8rem", color: "#6b7280", marginBottom: "1rem" }}>No add-ons available for this product.</p>
+            )}
+
+            <div style={{ borderTop: "1px solid #f3f4f6", paddingTop: "1rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div>
+                <p style={{ fontSize: "0.75rem", color: "#6b7280" }}>Base: {formatPrice(price)}</p>
+                {Object.keys(selectedAddons).length > 0 && (
+                  <p style={{ fontSize: "0.75rem", color: "#6b7280" }}>
+                    Add-ons: {formatPrice(Object.entries(selectedAddons).reduce((s, [aid, qty]) => {
+                      const a = addons.find((x) => x._id === aid);
+                      return s + (+a?.price || 0) * qty;
+                    }, 0))}
+                  </p>
+                )}
+              </div>
+              <button
+                onClick={() => confirmAddToCart(buildAddonList())}
+                style={{ background: "var(--color-olive)", color: "white", padding: "0.625rem 1.5rem", borderRadius: "0.25rem", fontSize: "0.75rem", fontWeight: 600, letterSpacing: "0.05em", textTransform: "uppercase" }}>
+                Confirm & Add to Cart
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

@@ -238,3 +238,9 @@
   color: var(--color-cream);
   opacity: 0.8;
 }
+
+.mainLogo {
+  height: auto;
+  width: 180px;
+  filter: brightness(0) saturate(100%) invert(72%) sepia(21%) saturate(1344%) hue-rotate(345deg) brightness(92%) contrast(85%);
+}

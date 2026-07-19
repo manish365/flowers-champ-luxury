@@ -1,16 +1,18 @@
 "use client";
-import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
+import { useSelector, useDispatch } from "react-redux";
 import Link from "next/link";
 import { 
-  ArrowRight, MessageCircle, Star, Flower2, Truck, 
-  HeartHandshake, ShieldCheck, Gift, Heart, Gem, Briefcase,
-  ShoppingBag, Quote
+  ArrowRight, MessageCircle, Flower2, Truck, 
+  HeartHandshake, ShieldCheck, Gift, ShoppingBag
 } from "lucide-react";
-import { fetchWebsiteCmsData, fetchReviews } from "@/lib/api";
+import { fetchWebsiteCmsData } from "@/lib/api";
+import { setCmsHome } from "@/lib/store/reducers/cmsData";
+import type { RootState } from "@/lib/store";
 import Reviews from "@/components/home/Reviews";
 import HeroBanner from "@/components/home/HeroBanner";
 import InstagramFeed from "@/components/home/InstagramFeed";
+import FlowerLoader from "@/components/shared/FlowerLoader";
 import styles from "./page.module.css";
 
 const FALLBACK_IMAGES = [
@@ -24,27 +26,54 @@ const FALLBACK_IMAGES = [
   "/images/teddy.jpg",
 ];
 
+// Map keywords in promo title/link → local public image
+const OCCASION_IMAGE_MAP: { keywords: string[]; src: string }[] = [
+  { keywords: ['birthday', 'bday'],                src: '/birthday.jpg' },
+  { keywords: ['christmas', 'xmas'],               src: '/Christmas.jpg' },
+  { keywords: ['anniversary', 'anniver'],          src: '/anniversary.jpg' },
+  { keywords: ['valentine', 'love', 'romantic'],   src: '/valentine day.jpg' },
+  { keywords: ['sympathy', 'condolence', 'grief'], src: '/Sympathy.jpg' },
+  { keywords: ['thank', 'gratitude'],              src: '/thankyou.jpg' },
+  { keywords: ['combo', 'bundle'],                 src: '/combo.jpg' },
+  { keywords: ['premium', 'luxury'],               src: '/premium.jpg' },
+  { keywords: ['chocolate', 'choco'],              src: '/chockalate.jpg' },
+  { keywords: ['flower', 'rose', 'bloom', 'bouquet', 'floral'], src: '/banner.jpg' },
+];
+
+function getOccasionImage(title: string, link: string, fallback: string): string {
+  const haystack = `${title} ${link}`.toLowerCase();
+  for (const entry of OCCASION_IMAGE_MAP) {
+    if (entry.keywords.some((kw) => haystack.includes(kw))) return entry.src;
+  }
+  return fallback; // use API image if no keyword matched
+}
+
 
 export default function Home() {
-  const [cmsData, setCmsData] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const dispatch = useDispatch();
+  const { home: cmsData, loaded } = useSelector((state: RootState) => (state as any).cmsData);
 
   useEffect(() => {
+    if (loaded) return; // already cached — skip API call
     async function loadCmsData() {
       try {
         const cmsRes = await fetchWebsiteCmsData();
-        setCmsData(cmsRes?.results?.home?.[0] || null);
+        dispatch(setCmsHome(cmsRes?.results?.home?.[0] || null));
       } catch (e) {
         console.error("Error fetching CMS data:", e);
-      } finally {
-        setLoading(false);
+        dispatch(setCmsHome(null));
       }
     }
     loadCmsData();
-  }, []);
+  }, [loaded, dispatch]);
 
-  if (loading) {
-    return <div style={{ height: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>Loading...</div>;
+  if (!loaded) {
+    return (
+      <div style={{ height: "100vh", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", gap: "1rem", background: "var(--color-cream)" }}>
+        <FlowerLoader size={140} />
+        <p style={{ fontSize: "0.75rem", color: "var(--color-olive)", letterSpacing: "0.1em", textTransform: "uppercase", fontWeight: 600 }}>Loading...</p>
+      </div>
+    );
   }
 
   // Extract sections from CMS Data
@@ -121,7 +150,7 @@ export default function Home() {
                 
                 return (
                   <Link href={promo.link || '#'} key={i} className={styles.occasionCard}>
-                    <img src={promo.url} alt={title} className={`${styles.occasionImage} arch-card`} />
+                    <img src={getOccasionImage(title, promo.link || '', promo.url)} alt={title} className={`${styles.occasionImage} arch-card`} />
                     <div className={styles.occasionContent}>
                       <div className={styles.occasionIconBox}>
                         <Gift size={20} />

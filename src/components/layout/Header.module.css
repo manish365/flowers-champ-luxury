@@ -34,7 +34,7 @@
   height: auto;
   width: 120px;
   flex-shrink: 1;
-  filter: brightness(0) invert(1);
+  filter: brightness(0) saturate(100%) invert(72%) sepia(21%) saturate(1344%) hue-rotate(345deg) brightness(92%) contrast(85%);
 }
 
 @media (min-width: 640px) {
@@ -434,18 +434,23 @@
   align-items: center;
   gap: 0.5rem;
   color: var(--color-cream);
-  font-size: 0.75rem;
-  font-weight: 500;
+  font-size: 0.7rem;
+  font-weight: 600;
   cursor: pointer;
-  transition: color 0.3s ease;
-  padding: 0.5rem;
-  border-radius: 0.25rem;
+  padding: 0.4rem 0.75rem;
+  border-radius: 9999px;
   flex-direction: row;
+  border: 1px solid rgba(200, 169, 107, 0.5);
+  background-color: rgba(255, 255, 255, 0.08);
+  letter-spacing: 0.04em;
+  transition: all 0.2s ease;
+  white-space: nowrap;
 }
 
 .locationSelector:hover {
   color: var(--color-gold);
-  background-color: rgba(255, 255, 255, 0.05);
+  border-color: var(--color-gold);
+  background-color: rgba(200, 169, 107, 0.15);
 }
 
 .locationText, .locationChevron {
@@ -456,6 +461,11 @@
   .locationText, .locationChevron {
     display: block;
   }
+}
+
+.locationIconMobile {
+  color: var(--color-gold);
+  flex-shrink: 0;
 }
 
 .searchCloseBtnExpanded:hover {

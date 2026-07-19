@@ -3,7 +3,10 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   reactStrictMode: false,
   images: {
-    domains: ["www.flowerschamp.com", "images.unsplash.com"],
+    remotePatterns: [
+      { protocol: "https", hostname: "www.flowerschamp.com" },
+      { protocol: "https", hostname: "flowerschamp-service-prod.up.railway.app" },
+    ],
   },
 };
 

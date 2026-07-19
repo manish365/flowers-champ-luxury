@@ -121,9 +121,9 @@ export default function Header() {
           </Link>
           
           <div className={styles.locationSelector} onClick={() => setIsLocationModalOpen(true)}>
-            <MapPin size={16} className={styles.locationIconMobile} />
+            <MapPin size={14} className={styles.locationIconMobile} />
             <span className={styles.locationText}>{location}</span>
-            <ChevronDown size={12} className={styles.locationChevron} />
+            <ChevronDown size={11} className={styles.locationChevron} />
           </div>
         </div>
         

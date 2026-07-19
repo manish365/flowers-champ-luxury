@@ -63,6 +63,18 @@ export async function fetchProducts(limit = 1000) {
   return get(`/product?limit=${limit}`, { next: { revalidate: 300 } });
 }
 
+export async function fetchProduct(id: string) {
+  return get(`/product/${id}`, { cache: 'no-store' });
+}
+
+export async function fetchProductDetailsMeta() {
+  return get('/product-details-meta', { cache: 'no-store' });
+}
+
+export async function fetchAddonProducts() {
+  return get('/addon-product', { cache: 'no-store' });
+}
+
 export async function fetchOrderByCode(orderNo: string, email: string) {
   return get(`/user-auth/orders/${orderNo}/${email}`, { cache: 'no-store' });
 }
