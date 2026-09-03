@@ -150,7 +150,7 @@ export default function Home() {
                 
                 return (
                   <Link href={promo.link || '#'} key={i} className={styles.occasionCard}>
-                    <img src={getOccasionImage(title, promo.link || '', promo.url)} alt={title} className={`${styles.occasionImage} arch-card`} />
+                    <img src={getOccasionImage(title, promo.link || '', promo.url)} alt={title} className={styles.occasionImage} />
                     <div className={styles.occasionContent}>
                       <div className={styles.occasionIconBox}>
                         <Gift size={20} />

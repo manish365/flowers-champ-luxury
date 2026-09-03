@@ -21,6 +21,7 @@ interface UserSliceTypes {
   user: any;
   favProducts: any;
   profile: any;
+  selectedCity: { name: string; _id: string } | null;
 }
 
 const initialState: UserSliceTypes = {
@@ -28,7 +29,6 @@ const initialState: UserSliceTypes = {
   user: {
     name: '',
     email: '',
-    // status: 'ACTIVE'
     status: ''
   },
   favProducts: [],
@@ -37,6 +37,7 @@ const initialState: UserSliceTypes = {
     email: "",
     status: "",
   },
+  selectedCity: null,
 };
 
 const userSlice = createSlice({
@@ -88,8 +89,10 @@ const userSlice = createSlice({
         favProducts: state.favProducts
       };
     },
+    setSelectedCity(state, action: PayloadAction<{ name: string; _id: string } | null>) {
+      state.selectedCity = action.payload;
+    },
     toggleDashboardSidebar(state, action: PayloadAction<boolean>) {
-      console.log('>>>>', action.payload);
       state.dashboradSidebarState = action.payload
     }
   },
@@ -103,6 +106,7 @@ export const {
   clearProfile,
   setUser,
   clearUser,
+  setSelectedCity,
   toggleDashboardSidebar,
 } = userSlice.actions;
 export default userSlice.reducer

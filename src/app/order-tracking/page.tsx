@@ -1,7 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { fetchOrderByCode } from "@/lib/api";
+import { PackageSearch, Hash, Mail, RotateCcw, ArrowLeft } from "lucide-react";
+import styles from "@/components/auth/Auth.module.css";
+import homeStyles from "@/app/page.module.css";
 
 export default function OrderTrackingPage() {
   const [email, setEmail] = useState("");
@@ -9,6 +13,7 @@ export default function OrderTrackingPage() {
   const [order, setOrder] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const router = useRouter();
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -38,7 +43,8 @@ export default function OrderTrackingPage() {
   const statusColor = (status: string) => {
     if (["PAYMENTRECEIVED", "NEW"].includes(status)) return "#2563eb";
     if (status === "DELETED") return "#dc2626";
-    return "inherit";
+    if (status === "DELIVERED") return "#16a34a";
+    return "var(--color-olive)";
   };
 
   const statusLabel = (status: string) => {
@@ -50,44 +56,83 @@ export default function OrderTrackingPage() {
   };
 
   return (
-    <section style={{ backgroundColor: "white", padding: "2rem 0", minHeight: "80vh" }}>
-      <div className="container">
-        <h1 className="font-serif" style={{ fontSize: "2rem", color: "var(--color-dark)", marginBottom: "1.5rem" }}>
-          Track Your Order
-        </h1>
+    <section className={styles.authSection}>
+      <div className={styles.authContainer}>
 
-        {error && (
-          <div style={{ background: "#fee2e2", color: "#991b1b", padding: "0.75rem 1rem", marginBottom: "1rem", borderRadius: "0.25rem" }}>
-            <strong>Error!</strong> {error}
+        {/* Left — same store images as login */}
+        <div
+          className={styles.imageSection}
+          style={{ alignItems: 'center', justifyContent: 'center', padding: '3rem', position: 'relative' }}
+        >
+          <div className={homeStyles.storyImageContainer} style={{ width: '100%', height: '100%', minHeight: '350px' }}>
+            <div className={homeStyles.storyImageAccent} />
+            <img src="/images/store.jpeg" alt="Store Interior" className={`${homeStyles.storyImage} ${homeStyles.storyImageMain}`} />
+            <img src="/images/store2.jpeg" alt="Store Front" className={`${homeStyles.storyImage} ${homeStyles.storyImageSecondary}`} />
           </div>
-        )}
-
-        <div style={{ display: "flex", gap: "2rem", flexWrap: "wrap", alignItems: "flex-start" }}>
-          <div style={{ flex: "0 0 auto" }}>
-            <img src="https://www.probunga.com/assets/template/templateprobunga/image/track_order.webp" alt="Track Order" style={{ maxWidth: "380px", width: "100%" }} />
+          <div
+            className={styles.imageOverlay}
+            style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.3) 60%, transparent 100%)', zIndex: 10 }}
+          >
+            <h2 className={styles.imageTitle}>Track Your Order</h2>
+            <p className={styles.imageDesc}>Enter your order number and email to get real-time updates on your delivery.</p>
           </div>
+        </div>
 
-          <div style={{ flex: "1 1 300px" }}>
+        {/* Right — form */}
+        <div className={styles.formSection}>
+          <div className={styles.authCard}>
+            <div className={styles.authHeader}>
+              <button onClick={() => router.back()} className={styles.backBtn}>
+                <ArrowLeft size={15} /> Back
+              </button>
+              <h1 className={`${styles.authTitle} font-serif`}>Where is my order?</h1>
+              <p className={styles.authSubtitle}>Enter your details below to track your order status</p>
+            </div>
+
+            {error && (
+              <div style={{ background: "#fee2e2", color: "#991b1b", padding: "0.65rem 1rem", marginBottom: "1rem", borderRadius: "0.375rem", fontSize: "0.8rem" }}>
+                {error}
+              </div>
+            )}
+
             {!order ? (
-              <div style={{ display: "flex", flexDirection: "column", gap: "1rem", maxWidth: "400px" }}>
-                <h2 style={{ fontSize: "1.25rem", color: "var(--color-dark)" }}>Where is my order?</h2>
-                <div>
-                  <label style={{ display: "block", marginBottom: "0.25rem", fontSize: "0.875rem" }}>Order No:</label>
-                  <input type="text" placeholder="Order Number : FCIDXXX" value={orderNo} onChange={(e) => setOrderNo(e.target.value)}
-                    style={{ width: "100%", padding: "0.5rem 0.75rem", border: "1px solid #d1d5db", borderRadius: "0.25rem", fontSize: "0.875rem" }} />
+              <div className={styles.authForm}>
+                <div className={styles.formGroup}>
+                  <label className={styles.label}>Order Number</label>
+                  <div className={styles.inputWrapper}>
+                    <Hash className={styles.inputIcon} size={16} />
+                    <input
+                      type="text"
+                      className={styles.input}
+                      placeholder="e.g. FCID123"
+                      value={orderNo}
+                      onChange={(e) => setOrderNo(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && searchOrder()}
+                    />
+                  </div>
                 </div>
-                <div>
-                  <label style={{ display: "block", marginBottom: "0.25rem", fontSize: "0.875rem" }}>Email Id:</label>
-                  <input type="email" placeholder="Enter Email Id" value={email} onChange={(e) => setEmail(e.target.value)}
-                    style={{ width: "100%", padding: "0.5rem 0.75rem", border: "1px solid #d1d5db", borderRadius: "0.25rem", fontSize: "0.875rem" }} />
+
+                <div className={styles.formGroup}>
+                  <label className={styles.label}>Email Address</label>
+                  <div className={styles.inputWrapper}>
+                    <Mail className={styles.inputIcon} size={16} />
+                    <input
+                      type="email"
+                      className={styles.input}
+                      placeholder="your@email.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && searchOrder()}
+                    />
+                  </div>
                 </div>
-                <button onClick={searchOrder} disabled={loading}
-                  style={{ padding: "0.625rem 1.5rem", background: "var(--color-olive)", color: "white", border: "none", borderRadius: "0.25rem", cursor: "pointer", fontSize: "0.875rem", fontWeight: 600 }}>
-                  {loading ? "Searching..." : "Continue"}
+
+                <button className={styles.submitBtn} onClick={searchOrder} disabled={loading}>
+                  {loading ? "Searching..." : <><PackageSearch size={15} style={{ marginRight: '0.5rem' }} />Track Order</>}
                 </button>
               </div>
             ) : (
-              <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.6rem" }}>
                 {[
                   ["Order Number", order.code],
                   ["Order Amount", order.orderDetails?.totalAmount],
@@ -95,18 +140,22 @@ export default function OrderTrackingPage() {
                   ["Delivery Date", new Date(order.delivery?.date).toLocaleDateString()],
                   ["Payment Status", order.payment?.status === "PENDING" ? "Due" : order.payment?.status === "PAYMENTREFUND" ? "Refunded" : order.payment?.status],
                 ].map(([label, val]) => (
-                  <div key={label} style={{ display: "flex", gap: "1rem", fontSize: "0.875rem" }}>
-                    <span style={{ color: "#6b7280", minWidth: "130px" }}>{label}:</span>
-                    <strong>{val}</strong>
+                  <div key={label} style={{ display: "flex", gap: "1rem", fontSize: "0.875rem", padding: "0.5rem 0", borderBottom: "1px solid #f3f4f6" }}>
+                    <span style={{ color: "#6b7280", minWidth: "130px", fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "0.04em" }}>{label}</span>
+                    <strong style={{ color: "var(--color-dark)" }}>{val}</strong>
                   </div>
                 ))}
-                <div style={{ display: "flex", gap: "1rem", fontSize: "0.875rem" }}>
-                  <span style={{ color: "#6b7280", minWidth: "130px" }}>Order Status:</span>
+                <div style={{ display: "flex", gap: "1rem", fontSize: "0.875rem", padding: "0.5rem 0", borderBottom: "1px solid #f3f4f6" }}>
+                  <span style={{ color: "#6b7280", minWidth: "130px", fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "0.04em" }}>Order Status</span>
                   <strong style={{ color: statusColor(order.orderDetails?.status) }}>{statusLabel(order.orderDetails?.status)}</strong>
                 </div>
-                <button onClick={() => { setOrder(null); setOrderNo(""); setError(""); }}
-                  style={{ marginTop: "0.5rem", padding: "0.625rem 1.5rem", background: "transparent", color: "var(--color-olive)", border: "1px solid var(--color-olive)", borderRadius: "0.25rem", cursor: "pointer", fontSize: "0.875rem", fontWeight: 600 }}>
-                  Track another order
+
+                <button
+                  className={styles.submitBtn}
+                  style={{ marginTop: "0.75rem", background: "transparent", color: "var(--color-olive)", border: "1px solid var(--color-olive)", boxShadow: "none" }}
+                  onClick={() => { setOrder(null); setOrderNo(""); setError(""); }}
+                >
+                  <RotateCcw size={14} style={{ marginRight: '0.5rem' }} /> Track Another Order
                 </button>
               </div>
             )}

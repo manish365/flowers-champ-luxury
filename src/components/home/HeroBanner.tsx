@@ -102,7 +102,7 @@ export default function HeroBanner({ banners }: HeroBannerProps) {
       <div className={`container ${styles.heroContent}`} style={{ position: 'relative', zIndex: 10, pointerEvents: 'none', height: '100%' }}>
         <div className={styles.heroText} style={{ pointerEvents: 'auto' }}>
           <h1 className={`${styles.heroTitle} font-serif`}>
-            Where Every<br />Flower Tells<br />a <span className="text-gold" style={{ fontStyle: 'italic' }}>Story</span>
+            Where Every<br />Flower Tells<br />a <span className="text-gold font-accent" style={{ textTransform: 'none' }}>Story</span>
           </h1>
           <p className={styles.heroDesc}>
             Luxury bouquets, wedding florals, unique gifts and same-day delivery – crafted with love, just for you.

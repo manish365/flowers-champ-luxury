@@ -3,10 +3,12 @@
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useSelector } from "react-redux";
 import { SlidersHorizontal, ArrowUpDown, X, ShoppingBag, Eye, Heart } from "lucide-react";
 import { fetchCategories, fetchProducts } from "@/lib/api";
 import FlowerLoader from "@/components/shared/FlowerLoader";
 import styles from "./PLPContent.module.css";
+import type { RootState } from "@/lib/store";
 
 interface PLPContentProps {
   type: "tag" | "category" | "city" | "search" | "all" | string;
@@ -17,6 +19,8 @@ const SORT_OPTIONS = ["Recommended", "Price: Low to High", "Price: High to Low",
 
 export default function PLPContent({ type, value }: PLPContentProps) {
   const router = useRouter();
+  const selectedCity = useSelector((state: RootState) => (state as any).user?.selectedCity);
+  const cityName: string | undefined = selectedCity?.name;
   const [allProducts, setAllProducts] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [tags, setTags] = useState<string[]>([]);
@@ -30,14 +34,16 @@ export default function PLPContent({ type, value }: PLPContentProps) {
   const [modalOpen, setModalOpen] = useState(false);
   const [modalTab, setModalTab] = useState<"sort" | "category" | "tags">("sort");
 
-  const [page, setPage] = useState(1);
   const PER_PAGE = 12;
+  const [visibleCount, setVisibleCount] = useState(PER_PAGE);
+
+  useEffect(() => { setVisibleCount(PER_PAGE); }, [type, value, selectedCategories, selectedTags, sortOption, cityName]);
 
   useEffect(() => {
     async function load() {
       try {
         setLoading(true);
-        const [catData, prodData] = await Promise.all([fetchCategories(), fetchProducts()]);
+        const [catData, prodData] = await Promise.all([fetchCategories(), fetchProducts(1000, cityName)]);
         const cats: any[] = catData.results || [];
         const prods: any[] = prodData.results || [];
 
@@ -54,7 +60,7 @@ export default function PLPContent({ type, value }: PLPContentProps) {
       }
     }
     load();
-  }, []);
+  }, [cityName]);
 
   const baseFiltered = useCallback(() => {
     if (!allProducts.length) return [];
@@ -105,22 +111,19 @@ export default function PLPContent({ type, value }: PLPContentProps) {
   }, [baseFiltered, selectedCategories, selectedTags, sortOption, categories]);
 
   const results = filtered();
-  const totalPages = Math.ceil(results.length / PER_PAGE);
-  const paginated = results.slice((page - 1) * PER_PAGE, page * PER_PAGE);
+  const visible = results.slice(0, visibleCount);
+  const hasMore = visibleCount < results.length;
 
   const toggleCategory = (name: string) => {
     setSelectedCategories((prev) => prev.includes(name) ? prev.filter((c) => c !== name) : [...prev, name]);
-    setPage(1);
   };
   const toggleTag = (name: string) => {
     setSelectedTags((prev) => prev.includes(name) ? prev.filter((t) => t !== name) : [...prev, name]);
-    setPage(1);
   };
   const clearFilters = () => {
     setSelectedCategories([]);
     setSelectedTags([]);
     setSortOption("Recommended");
-    setPage(1);
   };
 
   const activeFilterCount = selectedCategories.length + selectedTags.length + (sortOption !== "Recommended" ? 1 : 0);
@@ -188,13 +191,24 @@ export default function PLPContent({ type, value }: PLPContentProps) {
         </div>
       </div>
 
+      {/* Mobile Filter Bar */}
+      <div className={styles.mobileFilterBar}>
+        <button className={styles.mobileFilterBtn} onClick={() => { setModalTab("category"); setModalOpen(true); }}>
+          <SlidersHorizontal size={14} /> Filter
+          {activeFilterCount > 0 && <span className={styles.badge}>{activeFilterCount}</span>}
+        </button>
+        <button className={styles.mobileFilterBtn} onClick={() => { setModalTab("sort"); setModalOpen(true); }}>
+          <ArrowUpDown size={14} /> Sort
+        </button>
+      </div>
+
       {/* Product Grid */}
-      <div className="container" style={{ paddingBottom: "3rem" }}>
-        {paginated.length === 0 ? (
+      <div className="container" style={{ paddingBottom: "6rem" }}>
+        {visible.length === 0 ? (
           <div style={{ padding: "4rem", textAlign: "center", color: "#6b7280" }}>No products found in this collection.</div>
         ) : (
           <div className={styles.productGrid}>
-            {paginated.map((product, i) => {
+            {visible.map((product, i) => {
               const image = product.image?.default || "https://images.unsplash.com/photo-1591886960571-74d43a9d4166?q=80&w=400&auto=format&fit=crop";
               const price = product.countryPrice?.price?.standard?.currentPrice || "0";
               const oldPrice = product.countryPrice?.price?.standard?.oldPrice;
@@ -227,13 +241,11 @@ export default function PLPContent({ type, value }: PLPContentProps) {
           </div>
         )}
 
-        {totalPages > 1 && (
-          <div className={styles.pagination}>
-            <button className={styles.pageBtn} disabled={page === 1} onClick={() => setPage((p) => p - 1)}>‹ Prev</button>
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-              <button key={p} className={`${styles.pageBtn} ${p === page ? styles.pageBtnActive : ""}`} onClick={() => setPage(p)}>{p}</button>
-            ))}
-            <button className={styles.pageBtn} disabled={page === totalPages} onClick={() => setPage((p) => p + 1)}>Next ›</button>
+        {hasMore && (
+          <div className={styles.loadMoreWrap}>
+            <button className={styles.loadMoreBtn} onClick={() => setVisibleCount(c => c + PER_PAGE)}>
+              View More <span className={styles.loadMoreCount}>({results.length - visibleCount} remaining)</span>
+            </button>
           </div>
         )}
       </div>
@@ -277,7 +289,7 @@ export default function PLPContent({ type, value }: PLPContentProps) {
                     <div className={styles.radioList}>
                       {SORT_OPTIONS.map((opt) => (
                         <label key={opt} className={`${styles.radioRow} ${sortOption === opt ? styles.radioRowActive : ""}`}>
-                          <input type="radio" name="sort" checked={sortOption === opt} onChange={() => { setSortOption(opt); setPage(1); }} className={styles.radioInput} />
+                          <input type="radio" name="sort" checked={sortOption === opt} onChange={() => { setSortOption(opt); setVisibleCount(PER_PAGE); }} className={styles.radioInput} />
                           <span className={styles.radioCustom} />
                           <span className={styles.radioLabel}>{opt}</span>
                         </label>

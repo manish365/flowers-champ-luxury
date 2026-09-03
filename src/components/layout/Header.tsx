@@ -3,20 +3,31 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
-import { Truck, Phone, MessageCircle, ChevronDown, Search, User, ShoppingBag, Menu, X, MapPin } from 'lucide-react';
+import { useRouter, usePathname } from 'next/navigation';
+import { useDispatch, useSelector } from 'react-redux';
+import { Truck, Phone, MessageCircle, ChevronDown, Search, User, ShoppingBag, Menu, X, MapPin, PackageSearch } from 'lucide-react';
 import { fetchMenu, fetchAreas } from '@/lib/api';
+import { setSelectedCity } from '@/lib/store/reducers/user';
+import type { RootState } from '@/lib/store';
 import styles from './Header.module.css';
 
 export default function Header() {
+  const dispatch = useDispatch();
+  const reduxCity = useSelector((state: RootState) => (state as any).user?.selectedCity);
+  // Avoid hydration mismatch — only read persisted Redux state after mount
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+  const selectedCity = mounted ? reduxCity : null;
+
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const [activeSubMenu, setActiveSubMenu] = useState<string | null>(null);
+  const [activeMobileMenu, setActiveMobileMenu] = useState<string | null>(null);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [location, setLocation] = useState('Choose Location');
   const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
   const router = useRouter();
+  const pathname = usePathname();
 
   const [menuData, setMenuData] = useState<any[]>([]);
   const [areaData, setAreaData] = useState<any[]>([]);
@@ -107,7 +118,40 @@ export default function Header() {
 
   return (
     <header className={`${styles.header} bg-olive-dark`}>
-      {/* Navbar */}
+
+      {/* ── Top Bar ── */}
+      <div className={styles.topBar}>
+        <div className={`container ${styles.topBarInner}`}>
+          {/* Left */}
+          <div className={styles.topBarLeft}>
+            <Truck size={14} className={styles.topBarIcon} aria-hidden="true" />
+            <span className={styles.topBarTextSm}>Same Day Delivery</span>
+            <span className={styles.topBarTextMd}>Same Day Delivery Across Your City</span>
+          </div>
+          {/* Center */}
+          <div className={styles.topBarCenter}>Fresh Flowers • Handpicked With Love</div>
+          {/* Right */}
+          <div className={styles.topBarRight}>
+            {/* Location pill */}
+            <div className={styles.topBarLocation} onClick={() => setIsLocationModalOpen(true)}>
+              <MapPin size={12} className={styles.topBarLocationIcon} />
+              <span className={styles.topBarLocationText}>{selectedCity?.name || 'Choose Location'}</span>
+              <ChevronDown size={10} />
+            </div>
+            {/* Phone */}
+            <div className={styles.topBarPhone}>
+              <Phone size={13} className={styles.topBarGold} />
+              <span>+62 812 3456 7890</span>
+            </div>
+            {/* WhatsApp */}
+            <a href="https://wa.me/6281234567890" target="_blank" rel="noopener noreferrer" className={styles.topBarWa}>
+              <MessageCircle size={14} />
+            </a>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Main Navbar ── */}
       <nav className={`container ${styles.navbar}`}>
         <div className={styles.logoAndLocation}>
           <Link href="/" className={styles.logoArea}>
@@ -119,20 +163,25 @@ export default function Header() {
               className={styles.mainLogo}
             />
           </Link>
-          
-          <div className={styles.locationSelector} onClick={() => setIsLocationModalOpen(true)}>
-            <MapPin size={14} className={styles.locationIconMobile} />
-            <span className={styles.locationText}>{location}</span>
-            <ChevronDown size={11} className={styles.locationChevron} />
-          </div>
         </div>
+
+        {/* Mobile inline search */}
+        <form className={styles.mobileSearch} onSubmit={handleSearch}>
+          <Search size={13} style={{ color: 'rgba(200,169,107,0.8)', flexShrink: 0 }} />
+          <input
+            type="text"
+            className={styles.mobileSearchInput}
+            placeholder="Search flowers..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </form>
         
         <div className={styles.navLinks}>
           {(() => {
-            const visibleCount = menuData.length > 7 ? 6 : 7;
             return (
               <>
-                {menuData.slice(0, visibleCount).map((menu: any) => {
+                {menuData.map((menu: any) => {
             const hasCategories = menu.categories && menu.categories.length > 0;
             // The API returns a flat list of categories, some are headers
             // We group them here
@@ -154,6 +203,28 @@ export default function Header() {
 
             const hasMega = groupedCategories.length > 0;
 
+            // Split each group's links into columns of max 12
+            const columnarGroups: any[] = [];
+            groupedCategories.forEach((col: any) => {
+              const links: any[] = col.links;
+              if (links.length <= 12) {
+                columnarGroups.push(col);
+              } else {
+                for (let i = 0; i < links.length; i += 12) {
+                  columnarGroups.push({
+                    header: i === 0 ? col.header : '',
+                    links: links.slice(i, i + 12),
+                  });
+                }
+              }
+            });
+
+            const isActive = menu.link && menu.link !== '/' && menu.link !== '#'
+              ? pathname === menu.link || pathname.startsWith(menu.link + '/')
+              : !menu.link || menu.link === '#'
+                ? menu.categories?.some((c: any) => c.link && c.link !== '/' && c.link !== '#' && (pathname === c.link || pathname.startsWith(c.link + '/')))
+                : false;
+
             return (
               <div 
                 key={menu._id}
@@ -163,7 +234,7 @@ export default function Header() {
               >
                 <Link 
                   href={menu.link || '#'} 
-                  className={styles.navLink}
+                  className={`${styles.navLink} ${isActive || activeMenu === menu._id ? styles.navLinkActive : ''}`}
                   onClick={(e) => { if (!menu.link) e.preventDefault(); }}
                 >
                   {menu.isHot && (
@@ -173,29 +244,62 @@ export default function Header() {
                       </svg>
                     </i>
                   )}
-                  {menu.title} {hasMega && <ChevronDown size={12} className={activeMenu === menu._id ? styles.chevronUp : ''} />}
+                  {menu.title}
+                  {hasMega && <ChevronDown size={11} className={`${styles.navChevron} ${activeMenu === menu._id ? styles.chevronUp : ''}`} />}
+                  {isActive && <span className={styles.navActiveDot} />}
                 </Link>
                 
                 {activeMenu === menu._id && hasMega && (
                   <div className={styles.megamenuPanel}>
+                    {/* top accent line */}
+                    <div className={styles.megamenuAccentBar} />
                     <div className={styles.megamenuContent}>
                       <div className={styles.megamenuGrid}>
-                        {groupedCategories.map((col: any, idx: number) => (
+                        {columnarGroups.map((col: any, idx: number) => (
                           <div key={idx} className={styles.megamenuCol}>
-                            {col.header && <h4 className={styles.megamenuHeader}>{col.header}</h4>}
-                            <div className={styles.megamenuLinks}>
-                              {col.links.map((link: any, lIdx: number) => (
-                                <Link key={lIdx} href={link.link || '#'} className={styles.megamenuLink}>{link.title}</Link>
-                              ))}
-                            </div>
+                            {col.header && (
+                              <div className={styles.megamenuHeaderWrap}>
+                                <span className={styles.megamenuHeaderDot} />
+                                <h4 className={styles.megamenuHeader}>{col.header}</h4>
+                              </div>
+                            )}
+                            <ul className={styles.megamenuLinks}>
+                              {col.links.map((link: any, lIdx: number) => {
+                                const linkActive = link.link && link.link !== '/' && link.link !== '#' && (pathname === link.link || pathname.startsWith(link.link + '/'));
+                                return (
+                                  <li key={lIdx}>
+                                    <Link href={link.link || '#'} className={`${styles.megamenuLink} ${linkActive ? styles.megamenuLinkActive : ''}`}>
+                                      <span className={styles.megamenuLinkArrow}>›</span>
+                                      {link.title}
+                                    </Link>
+                                  </li>
+                                );
+                              })}
+                            </ul>
                           </div>
                         ))}
                       </div>
-                      {menu.image && (
-                        <div className={styles.megamenuPromo}>
-                          <img src={menu.image} alt={menu.title} className={styles.megamenuImg} />
+                      <div className={styles.megamenuSidebar}>
+                        {menu.image ? (
+                          <div className={styles.megamenuPromo}>
+                            <img src={menu.image} alt={menu.title} className={styles.megamenuImg} />
+                            <div className={styles.megamenuPromoOverlay}>
+                              <span className={styles.megamenuPromoLabel}>Shop {menu.title}</span>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className={styles.megamenuFeature}>
+                            <div className={styles.megamenuFeatureIcon}>✦</div>
+                            <p className={styles.megamenuFeatureTitle}>{menu.title}</p>
+                            <p className={styles.megamenuFeatureText}>Handpicked with love, delivered fresh to your door.</p>
+                            <Link href={menu.link || '/collections'} className={styles.megamenuFeatureBtn}>Explore All →</Link>
+                          </div>
+                        )}
+                        <div className={styles.megamenuBadges}>
+                          <span className={styles.megamenuBadge}>🚚 Same Day</span>
+                          <span className={styles.megamenuBadge}>🌸 Fresh Picks</span>
                         </div>
-                      )}
+                      </div>
                     </div>
                   </div>
                 )}
@@ -203,93 +307,6 @@ export default function Header() {
             );
           })}
           
-          {menuData.length > 7 && (
-            <div 
-              className={styles.menuParent}
-              onMouseEnter={() => handleMenuEnter('more')}
-              onMouseLeave={handleMenuLeave}
-            >
-              <div className={styles.navLink} style={{ cursor: 'pointer' }}>
-                More <ChevronDown size={12} className={activeMenu === 'more' ? styles.chevronUp : ''} />
-              </div>
-              
-              {activeMenu === 'more' && (
-                <div className={styles.dropdownPanel}>
-                  {menuData.slice(6).map((menu: any, idx: number) => {
-                    const hasCategories = menu.categories && menu.categories.length > 0;
-                    const groupedCategories: any[] = [];
-                    let currentGroup: any = null;
-
-                    if (hasCategories) {
-                      menu.categories.forEach((cat: any) => {
-                        if (cat.isHeader) {
-                          if (currentGroup) groupedCategories.push(currentGroup);
-                          currentGroup = { header: cat.title, links: [] };
-                        } else {
-                          if (!currentGroup) currentGroup = { header: '', links: [] };
-                          currentGroup.links.push(cat);
-                        }
-                      });
-                      if (currentGroup) groupedCategories.push(currentGroup);
-                    }
-
-                    const hasMega = groupedCategories.length > 0;
-                    
-                    return (
-                      <div 
-                        key={menu._id || idx}
-                        onMouseEnter={() => handleSubMenuEnter(menu._id)}
-                        onMouseLeave={handleSubMenuLeave}
-                      >
-                        <Link 
-                          href={menu.link || '#'} 
-                          className={styles.dropdownLink}
-                          style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
-                          onClick={(e) => { if (!menu.link) e.preventDefault(); }}
-                        >
-                          <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                            {menu.isHot && (
-                              <i aria-hidden="true" style={{ color: 'var(--color-gold)', display: 'flex' }}>
-                                <svg stroke="currentColor" fill="currentColor" strokeWidth="0" viewBox="0 0 320 512" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg">
-                                  <path d="M296 160H180.6l42.6-129.8C227.2 15 215.7 0 200 0H56C44 0 33.8 8.9 32.2 20.8l-32 240C-1.7 275.2 9.5 288 24 288h118.7L96.6 482.5c-3.6 15.2 8 29.5 23.3 29.5 8.4 0 16.4-4.4 20.8-12l176-304c9.3-15.9-2.2-36-20.7-36z"></path>
-                                </svg>
-                              </i>
-                            )}
-                            {menu.title}
-                          </span>
-                          {hasMega && <ChevronDown size={12} style={{ transform: 'rotate(-90deg)' }} />}
-                        </Link>
-                        
-                        {activeSubMenu === menu._id && hasMega && (
-                          <div className={styles.megamenuPanel}>
-                            <div className={styles.megamenuContent}>
-                              <div className={styles.megamenuGrid}>
-                                {groupedCategories.map((col: any, colIdx: number) => (
-                                  <div key={colIdx} className={styles.megamenuCol}>
-                                    {col.header && <h4 className={styles.megamenuHeader}>{col.header}</h4>}
-                                    <div className={styles.megamenuLinks}>
-                                      {col.links.map((link: any, lIdx: number) => (
-                                        <Link key={lIdx} href={link.link || '#'} className={styles.megamenuLink}>{link.title}</Link>
-                                      ))}
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
-                              {menu.image && (
-                                <div className={styles.megamenuPromo}>
-                                  <img src={menu.image} alt={menu.title} className={styles.megamenuImg} />
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          )}
               </>
             );
           })()}
@@ -304,13 +321,16 @@ export default function Header() {
           </button>
           
           <div className={styles.searchContainer}>
-            <button className={styles.actionIcon} onClick={() => setIsSearchOpen(true)}>
+            <button className={styles.actionIcon} onClick={() => setIsSearchOpen(true)} title="Search">
               <Search size={16} />
             </button>
           </div>
 
-          <Link href="/login" className={styles.actionIcon}><User size={16} /></Link>
-          <Link href="/cart" className={styles.actionIcon}>
+          <Link href="/order-tracking" className={`${styles.actionIcon} ${styles.desktopOnly}`} title="Track Order">
+            <PackageSearch size={16} />
+          </Link>
+          <Link href="/login" className={`${styles.actionIcon} ${styles.desktopOnly}`} title="My Account"><User size={16} /></Link>
+          <Link href="/cart" className={`${styles.actionIcon} ${styles.desktopOnly}`} title="Shopping Cart">
             <ShoppingBag size={16} />
             <span className={styles.cartBadge}>0</span>
           </Link>
@@ -340,21 +360,44 @@ export default function Header() {
       {/* Mobile Menu Drawer */}
       <div className={`${styles.mobileMenu} ${isMobileMenuOpen ? styles.mobileMenuOpen : ''}`}>
         <div className={styles.mobileNavLinks}>
-          <Link href="#" className={styles.mobileNavLink} onClick={() => setIsMobileMenuOpen(false)}>Express Delivery</Link>
-          <Link href="#" className={styles.mobileNavLink} onClick={() => setIsMobileMenuOpen(false)}>Premium Flowers</Link>
-          <div className={styles.mobileNavLink}>
-            Flowers <ChevronDown size={12} />
-          </div>
-          <div className={styles.mobileNavLink}>
-            Occasion <ChevronDown size={12} />
-          </div>
-          <Link href="#" className={styles.mobileNavLink} onClick={() => setIsMobileMenuOpen(false)}>Gift Bundles</Link>
-          <Link href="#" className={`${styles.mobileNavLink} ${styles.navLinkActive}`} onClick={() => setIsMobileMenuOpen(false)}>Deals</Link>
-          <Link href="#" className={styles.mobileNavLink} onClick={() => setIsMobileMenuOpen(false)}>Cakes</Link>
-          <div className={styles.mobileNavLink}>
-            Collections <ChevronDown size={12} />
-          </div>
-          <Link href="#" className={styles.mobileNavLink} onClick={() => setIsMobileMenuOpen(false)}>Plants</Link>
+          {menuData.map((menu: any) => {
+            const hasCategories = menu.categories && menu.categories.length > 0;
+            const isOpen = activeMobileMenu === menu._id;
+            return (
+              <div key={menu._id} className={styles.mobileNavItem}>
+                <div
+                  className={styles.mobileNavLink}
+                  onClick={() => {
+                    if (hasCategories) {
+                      setActiveMobileMenu(isOpen ? null : menu._id);
+                    } else {
+                      router.push(menu.link || '#');
+                      setIsMobileMenuOpen(false);
+                    }
+                  }}
+                >
+                  <span>{menu.title}</span>
+                  {hasCategories && (
+                    <ChevronDown size={14} className={isOpen ? styles.chevronUp : ''} style={{ transition: 'transform 0.3s' }} />
+                  )}
+                </div>
+                {hasCategories && isOpen && (
+                  <div className={styles.mobileSubMenu}>
+                    {menu.categories.filter((c: any) => !c.isHeader).map((cat: any, i: number) => (
+                      <Link
+                        key={i}
+                        href={cat.link || '#'}
+                        className={styles.mobileSubLink}
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      >
+                        {cat.title}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
 
@@ -375,9 +418,8 @@ export default function Header() {
                   key={item._id || item.name} 
                   className={styles.cityBtn}
                   onClick={() => {
-                    setLocation(item.name);
+                    dispatch(setSelectedCity({ name: item.name, _id: item._id }));
                     setIsLocationModalOpen(false);
-                    window.location.href = `/city/${encodeURIComponent(item.name)}`;
                   }}
                 >
                   <MapPin size={16} />

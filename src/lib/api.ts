@@ -59,8 +59,9 @@ export async function fetchCategories() {
   return get('/category');
 }
 
-export async function fetchProducts(limit = 1000) {
-  return get(`/product?limit=${limit}`, { next: { revalidate: 300 } });
+export async function fetchProducts(limit = 1000, city?: string) {
+  const cityParam = city ? `&city=${encodeURIComponent(city)}` : '';
+  return get(`/product?limit=${limit}${cityParam}`, { next: { revalidate: 300 } });
 }
 
 export async function fetchProduct(id: string) {
