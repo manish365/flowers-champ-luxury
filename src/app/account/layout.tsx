@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useSession, signOut } from "next-auth/react";
 import { User, MapPin, Package, Settings, LogOut } from "lucide-react";
 import styles from "./layout.module.css";
 
@@ -11,6 +12,11 @@ export default function AccountLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const { data: session } = useSession();
+  
+  const userName = session?.user?.name || "User";
+  const userEmail = session?.user?.email || "";
+  const avatarInitials = userName.substring(0, 2).toUpperCase();
 
   const navItems = [
     { name: "Dashboard", href: "/account", icon: User },
@@ -27,10 +33,10 @@ export default function AccountLayout({
         <aside className={styles.sidebar}>
           <div className={styles.sidebarCard}>
             <div className={styles.userProfile}>
-              <div className={styles.avatar}>JD</div>
+              <div className={styles.avatar}>{avatarInitials}</div>
               <div className={styles.userInfo}>
-                <span className={styles.userName}>John Doe</span>
-                <span className={styles.userEmail}>john@example.com</span>
+                <span className={styles.userName}>{userName}</span>
+                <span className={styles.userEmail}>{userEmail}</span>
               </div>
             </div>
 
@@ -52,7 +58,7 @@ export default function AccountLayout({
             </nav>
 
             <div className={styles.logoutBtn}>
-              <button className={`${styles.navItem} w-full text-left`} style={{ border: 'none', background: 'none', cursor: 'pointer' }}>
+              <button onClick={() => signOut({ callbackUrl: '/' })} className={`${styles.navItem} w-full text-left`} style={{ border: 'none', background: 'none', cursor: 'pointer', width: '100%' }}>
                 <LogOut className={styles.navIcon} />
                 Sign Out
               </button>

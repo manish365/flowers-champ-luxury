@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Home, Menu, MapPin, User, ShoppingBag, X, ChevronDown } from "lucide-react";
+import { useSession } from "next-auth/react";
 import { useDispatch, useSelector } from "react-redux";
 import { useState, useEffect } from "react";
 import { setSelectedCity } from "@/lib/store/reducers/user";
@@ -22,6 +23,8 @@ export default function BottomTab() {
   const pathname = usePathname();
   const router = useRouter();
   const dispatch = useDispatch();
+  const { data: session } = useSession();
+  const isLoggedIn = !!session?.user;
   const [mounted, setMounted] = useState(false);
   const [locationOpen, setLocationOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -56,8 +59,10 @@ export default function BottomTab() {
     <>
       <nav className={styles.bottomTab}>
         {tabs.map((tab) => {
-          const isActive = tab.href ? (tab.href === "/" ? pathname === "/" : pathname.startsWith(tab.href)) : false;
+          const actualHref = tab.label === "Account" && isLoggedIn ? "/account" : tab.href;
+          const isActive = actualHref ? (actualHref === "/" ? pathname === "/" : pathname.startsWith(actualHref)) : false;
           const Icon = tab.icon;
+          
           if (tab.action === "location") {
             return (
               <button key="location" className={`${styles.tabItem} ${selectedCity ? styles.tabItemActive : ""}`} onClick={() => setLocationOpen(true)}>
@@ -75,7 +80,7 @@ export default function BottomTab() {
             );
           }
           return (
-            <Link key={tab.href} href={tab.href!} className={`${styles.tabItem} ${isActive ? styles.tabItemActive : ""}`}>
+            <Link key={tab.label} href={actualHref!} className={`${styles.tabItem} ${isActive ? styles.tabItemActive : ""}`}>
               <Icon size={20} />
               <span>{tab.label}</span>
             </Link>

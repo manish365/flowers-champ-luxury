@@ -7,6 +7,7 @@ import styles from "@/components/auth/Auth.module.css";
 import homeStyles from "@/app/page.module.css";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { registerUser } from "@/lib/api";
 
 export default function SignupPage() {
   const [showPassword, setShowPassword] = useState(false);
@@ -20,6 +21,10 @@ export default function SignupPage() {
     setLoading(true);
     setError("");
     const fd = new FormData(e.currentTarget);
+    const firstName = fd.get("firstName") as string;
+    const lastName = fd.get("lastName") as string;
+    const email = fd.get("email") as string;
+    const phone = fd.get("phone") as string;
     const password = fd.get("password") as string;
     const confirm = fd.get("confirm") as string;
     if (password !== confirm) {
@@ -27,8 +32,31 @@ export default function SignupPage() {
       setLoading(false);
       return;
     }
-    // TODO: wire up registration API
-    setLoading(false);
+    
+    try {
+      const res = await registerUser({
+        email,
+        name: `${firstName} ${lastName}`,
+        mobile: phone,
+        password
+      });
+
+      if (!res?.success) {
+        if (res?.error?.code?.toString() === '11000') {
+           const isMobile = res?.error?.message?.includes('mobile') || (res?.error?.keyValue && res?.error?.keyValue?.mobile);
+           setError(isMobile ? 'Mobile Number already exists.' : 'Email already exists.');
+        } else {
+           setError(res?.error?.message || res?.message || "Registration failed");
+        }
+      } else {
+        router.push("/login");
+      }
+    } catch (err) {
+      console.log(err)
+      setError("An error occurred during registration. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

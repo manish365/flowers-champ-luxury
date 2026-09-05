@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSelector } from "react-redux";
 import { SlidersHorizontal, ArrowUpDown, X, ShoppingBag, Eye, Heart } from "lucide-react";
-import { fetchCategories, fetchProducts } from "@/lib/api";
+import { fetchCategories, fetchProducts, fetchSearchProducts } from "@/lib/api";
 import FlowerLoader from "@/components/shared/FlowerLoader";
 import styles from "./PLPContent.module.css";
 import type { RootState } from "@/lib/store";
@@ -43,7 +43,13 @@ export default function PLPContent({ type, value }: PLPContentProps) {
     async function load() {
       try {
         setLoading(true);
-        const [catData, prodData] = await Promise.all([fetchCategories(), fetchProducts(1000, cityName)]);
+        let prodPromise;
+        if (type === "search" && value.trim()) {
+          prodPromise = fetchSearchProducts(value.trim(), 1, 1000);
+        } else {
+          prodPromise = fetchProducts(1000, cityName);
+        }
+        const [catData, prodData] = await Promise.all([fetchCategories(), prodPromise]);
         const cats: any[] = catData.results || [];
         const prods: any[] = prodData.results || [];
 
@@ -64,14 +70,6 @@ export default function PLPContent({ type, value }: PLPContentProps) {
 
   const baseFiltered = useCallback(() => {
     if (!allProducts.length) return [];
-    if (type === "search" && value.trim()) {
-      const q = value.toLowerCase().trim();
-      return allProducts.filter((p) =>
-        p.name?.toLowerCase().includes(q) ||
-        p.description?.toLowerCase().includes(q) ||
-        p.tags?.some((t: any) => t?.name?.toLowerCase().includes(q))
-      );
-    }
     if (type === "all" || type === "search") return allProducts;
     if (type === "tag") {
       return allProducts.filter((p) =>

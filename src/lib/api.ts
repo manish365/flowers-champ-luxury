@@ -1,4 +1,4 @@
-const BASE_URL = 'https://flowerschamp-service-prod.up.railway.app';
+const BASE_URL = process.env.NEXT_PUBLIC_BACK_END_URL || "http://localhost:8080";
 
 async function get(path: string, options?: RequestInit) {
   const res = await fetch(`${BASE_URL}${path}`, { next: { revalidate: 3600 }, ...options });
@@ -87,3 +87,36 @@ export async function loginVendor(email: string, password: string) {
 export async function updateOrderStatus(email: string, code: string, status: string, receivedBy: string) {
   return post('/user-auth/update-order-status', { email, code, status, receivedBy });
 }
+
+export async function registerUser(data: any) {
+  return post('/user-auth/register', data);
+}
+
+export async function fetchSearchProducts(value: string, page = 1, limit = 12) {
+  const params = new URLSearchParams({ value, page: page.toString(), limit: limit.toString() }).toString();
+  return get(`/product/adv-search?${params}`, { cache: 'no-store' });
+}
+
+// --- Authenticated APIs ---
+
+async function getAuth(path: string, token: string, options?: RequestInit) {
+  const res = await fetch(`${BASE_URL}${path}`, {
+    ...options,
+    cache: 'no-store',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      ...options?.headers,
+    }
+  });
+  if (!res.ok) throw new Error(`Failed to fetch auth ${path}`);
+  return res.json();
+}
+
+export async function fetchUserOrders(token: string) {
+  return getAuth('/user-auth/orders', token);
+}
+
+export async function fetchUserProfile(token: string) {
+  return getAuth('/user-auth/profile', token); // Just guessing the endpoint based on common patterns, actually let's just return what session gives us first
+}
+

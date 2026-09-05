@@ -7,11 +7,14 @@ import { useRouter, usePathname } from 'next/navigation';
 import { useDispatch, useSelector } from 'react-redux';
 import { Truck, Phone, MessageCircle, ChevronDown, Search, User, ShoppingBag, Menu, X, MapPin, PackageSearch } from 'lucide-react';
 import { fetchMenu, fetchAreas } from '@/lib/api';
+import { useSession } from "next-auth/react";
 import { setSelectedCity } from '@/lib/store/reducers/user';
 import type { RootState } from '@/lib/store';
 import styles from './Header.module.css';
 
 export default function Header() {
+  const { data: session } = useSession();
+  const isLoggedIn = !!session?.user;
   const dispatch = useDispatch();
   const reduxCity = useSelector((state: RootState) => (state as any).user?.selectedCity);
   // Avoid hydration mismatch — only read persisted Redux state after mount
@@ -329,7 +332,7 @@ export default function Header() {
           <Link href="/order-tracking" className={`${styles.actionIcon} ${styles.desktopOnly}`} title="Track Order">
             <PackageSearch size={16} />
           </Link>
-          <Link href="/login" className={`${styles.actionIcon} ${styles.desktopOnly}`} title="My Account"><User size={16} /></Link>
+          <Link href={isLoggedIn ? "/account" : "/login"} className={`${styles.actionIcon} ${styles.desktopOnly}`} title="My Account"><User size={16} /></Link>
           <Link href="/cart" className={`${styles.actionIcon} ${styles.desktopOnly}`} title="Shopping Cart">
             <ShoppingBag size={16} />
             <span className={styles.cartBadge}>0</span>

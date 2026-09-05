@@ -379,7 +379,7 @@
   position: fixed;
   top: 112px;
   left: 0;
-  width: 100vw;
+  width: 100%;
   background: linear-gradient(135deg, #1a2318 0%, #243020 60%, #1e2a1c 100%);
   box-shadow: 0 20px 40px rgba(0,0,0,0.4), 0 1px 0 rgba(200,169,107,0.15);
   z-index: 100;
@@ -749,6 +749,12 @@
   max-width: 200px;
 }
 
+.headerSearchInput {
+  flex: 1;
+  max-width: calc(100% - 380px);
+  min-width: 250px;
+}
+
 @media (min-width: 1024px) {
   .mobileSearch { display: none; }
 }
@@ -794,23 +800,7 @@
 
 /* Mobile Menu Button */
 .mobileMenuBtn {
-  display: flex;
-  background: none;
-  border: none;
-  color: #ffffff;
-  cursor: pointer;
-  padding: 0.25rem;
-  transition: color 0.3s ease;
-}
-
-.mobileMenuBtn:hover {
-  color: var(--color-gold);
-}
-
-@media (min-width: 1024px) {
-  .mobileMenuBtn {
-    display: none;
-  }
+  display: none;
 }
 
 /* Mobile Menu Drawer */

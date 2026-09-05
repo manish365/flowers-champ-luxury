@@ -2,26 +2,36 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useDispatch, useSelector } from "react-redux";
 import { User, MapPin, Calendar, CreditCard, Lock, Check, ChevronDown, Flower2 } from "lucide-react";
 import styles from "./page.module.css";
-
-const STATIC_ITEMS = [
-  { id: 1, name: "Blush Romance Bouquet", variant: "Premium", price: 850000, qty: 1, img: "/birthday.jpg" },
-  { id: 2, name: "Classic Red Roses", variant: "Standard", price: 680000, qty: 2, img: "/anniversary.jpg" },
-];
+import { RootState } from "@/lib/store";
+import { removeAllProduct } from "@/lib/store/reducers/cart";
 
 const STEPS = ["Cart", "Details", "Payment", "Confirm"];
 
 export default function CheckoutPage() {
+  const router = useRouter();
+  const dispatch = useDispatch();
+  const cartItems = useSelector((state: RootState) => state.cart.cartItems);
+  
   const [paymentMethod, setPaymentMethod] = useState("bank_transfer");
-  const [step] = useState(1); // 0-based index of current step
+  const [step, setStep] = useState(1); // 0-based index of current step
 
   const fmt = (p: number) =>
     new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(p);
 
-  const subtotal = STATIC_ITEMS.reduce((s, i) => s + i.price * i.qty, 0);
-  const delivery = 50000;
+  const subtotal = cartItems.reduce((s, i) => s + (i.variantPrice || 0) * i.qty + (i.addOnPrice || 0), 0);
+  const delivery = cartItems.reduce((s, i) => s + (i.delivery?.price || 0), 0);
   const total = subtotal + delivery;
+
+  const handlePlaceOrder = async () => {
+    // In a real scenario, this would call `createOrder` API with form data
+    alert("Order placed successfully!");
+    dispatch(removeAllProduct());
+    router.push("/account/orders");
+  };
 
   return (
     <div className={styles.page}>
@@ -202,17 +212,17 @@ export default function CheckoutPage() {
               <h2 className={`${styles.summaryTitle} font-serif`}>Order Summary</h2>
 
               <div className={styles.summaryItems}>
-                {STATIC_ITEMS.map((item) => (
-                  <div key={item.id} className={styles.summaryItem}>
+                {cartItems.map((item, idx) => (
+                  <div key={item.id + idx} className={styles.summaryItem}>
                     <div className={styles.summaryImgBox}>
-                      <img src={item.img} alt={item.name} className={styles.summaryImg} />
+                      <img src={item.thumb} alt={item.name} className={styles.summaryImg} />
                       <span className={styles.summaryQty}>{item.qty}</span>
                     </div>
                     <div className={styles.summaryItemInfo}>
                       <p className={styles.summaryItemName}>{item.name}</p>
                       <p className={styles.summaryItemMeta}>{item.variant}</p>
                     </div>
-                    <p className={styles.summaryItemPrice}>{fmt(item.price * item.qty)}</p>
+                    <p className={styles.summaryItemPrice}>{fmt((item.variantPrice || 0) * item.qty + (item.addOnPrice || 0))}</p>
                   </div>
                 ))}
               </div>
@@ -228,7 +238,7 @@ export default function CheckoutPage() {
                 <span>{fmt(total)}</span>
               </div>
 
-              <button className={styles.placeOrderBtn}>
+              <button className={styles.placeOrderBtn} onClick={handlePlaceOrder}>
                 <Lock size={14} /> Place Order
               </button>
 

@@ -44,6 +44,14 @@ export default function ProductPDP() {
   const [addons, setAddons] = useState<any[]>([]);
   const [selectedAddons, setSelectedAddons] = useState<Record<string, number>>({});
 
+  // product options
+  const [glassVaseAdded, setGlassVaseAdded] = useState(false);
+  const [eggLessAdded, setEggLessAdded] = useState(false);
+
+  // Constants (replace with API/config if needed)
+  const VASE_PRICE = 399000;
+  const EGGLESS_PRICE = 99000;
+
   // tabs
   const [activeTab, setActiveTab] = useState<"description" | "care" | "delivery">("description");
 
@@ -93,22 +101,22 @@ export default function ProductPDP() {
     if (!product?.cityPrice?.length) return;
     const cp = product.cityPrice.find((c: any) => c._id === cityId);
     if (cp) {
-      setVariantPrice(+(cp.price?.standard?.currentPrice || 0));
+      setVariantPrice(+(cp.price?.[selectedVariant === 'classic' ? 'standard' : selectedVariant]?.currentPrice || cp.price?.standard?.currentPrice || 0));
       setDeliveryPrice(+(cp.price?.standard?.deliveryPrice || 0));
     } else {
-      setVariantPrice(+product.countryPrice?.price?.standard?.currentPrice || 0);
+      setVariantPrice(+(product.countryPrice?.price?.[selectedVariant === 'classic' ? 'standard' : selectedVariant]?.currentPrice || product.countryPrice?.price?.standard?.currentPrice || 0));
       setDeliveryPrice(100000);
     }
   };
 
   const handleSlotSelect = (slot: any) => {
     setSelectedSlot(slot);
-    setDeliveryDate(new Date().toISOString().split("T")[0]);
     setShowSlots(false);
   };
 
   const handleAddToCart = async () => {
     if (!selectedCity) { setError("Please select a city first."); return; }
+    if (!deliveryDate) { setError("Please select a delivery date first."); return; }
     if (!selectedSlot) { setError("Please select a delivery slot first."); return; }
     setError("");
 
@@ -134,10 +142,6 @@ export default function ProductPDP() {
       qty: 1,
       variant: selectedVariant,
       variantPrice,
-      glassVaseAdded: false,
-      glassVasePrice: 0,
-      eggLess: false,
-      eggLessPrice: 0,
       delivery: {
         type: selectedSlot?.type || "STANDARD",
         date: deliveryDate,
@@ -148,6 +152,10 @@ export default function ProductPDP() {
       addOns: addonList,
       addOnQty: addonList.reduce((s: number, a: any) => s + (a.qty || 0), 0),
       addOnPrice: addonList.reduce((s: number, a: any) => s + (a.unitPrice || 0) * (a.qty || 0), 0),
+      glassVaseAdded,
+      glassVasePrice: glassVaseAdded ? VASE_PRICE : 0,
+      eggLess: eggLessAdded,
+      eggLessPrice: eggLessAdded ? EGGLESS_PRICE : 0,
       cityId: selectedCity,
       cityName: selectedCityName,
     };
@@ -264,6 +272,40 @@ export default function ProductPDP() {
               )}
             </div>
 
+            {/* Select Variant / Size */}
+            <div style={{ marginBottom: "1.5rem" }}>
+              <h3 className={styles.deliveryTitle} style={{ marginBottom: "0.75rem" }}>Select Size</h3>
+              <div style={{ display: "flex", gap: "0.5rem" }}>
+                {(["classic", "deluxe", "premium"] as const).map((v) => {
+                  const pPrice = product.cityPrice?.find((c: any) => c._id === selectedCity)?.price || product.countryPrice?.price;
+                  if (!pPrice || !pPrice[v === 'classic' ? 'standard' : v]?.currentPrice) return null;
+                  return (
+                    <button
+                      key={v}
+                      onClick={() => {
+                        setSelectedVariant(v);
+                        setVariantPrice(+pPrice[v === 'classic' ? 'standard' : v].currentPrice);
+                      }}
+                      style={{
+                        flex: 1,
+                        padding: "0.5rem",
+                        fontSize: "0.75rem",
+                        border: `1px solid ${selectedVariant === v ? "var(--color-gold)" : "#e5e7eb"}`,
+                        borderRadius: "0.25rem",
+                        background: selectedVariant === v ? "rgba(200,169,107,0.15)" : "white",
+                        color: selectedVariant === v ? "var(--color-gold)" : "var(--color-dark)",
+                        cursor: "pointer",
+                        fontWeight: selectedVariant === v ? 600 : 400,
+                        textTransform: "capitalize"
+                      }}
+                    >
+                      {v}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
             {/* City Select */}
             <div className={styles.deliveryCheck}>
               <h3 className={styles.deliveryTitle}>
@@ -282,13 +324,27 @@ export default function ProductPDP() {
               </select>
             </div>
 
-            {/* Delivery Slot */}
+            {/* Delivery Date & Slot */}
             {selectedCity && (
               <div className={styles.deliveryCheck} style={{ marginTop: "1rem" }}>
                 <h3 className={styles.deliveryTitle}>
-                  <Truck size={14} /> Select Delivery Slot
+                  <Truck size={14} /> Select Delivery Details
                 </h3>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", marginTop: "0.5rem" }}>
+                
+                <div style={{ marginTop: "1rem" }}>
+                  <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.5rem' }}>Delivery Date</label>
+                  <input 
+                    type="date" 
+                    className={styles.deliveryInput}
+                    value={deliveryDate}
+                    onChange={(e) => setDeliveryDate(e.target.value)}
+                    min={new Date().toISOString().split("T")[0]}
+                    style={{ width: "100%", cursor: "pointer", marginBottom: "1rem" }}
+                  />
+                </div>
+
+                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.5rem' }}>Delivery Slot</label>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
                   {standardSlots.map((slot: any) => (
                     <button
                       key={slot._id}
@@ -310,6 +366,22 @@ export default function ProductPDP() {
                 </div>
               </div>
             )}
+
+            {/* Variant / Upgrades (Eggless / Vase) */}
+            <div style={{ marginTop: "1.5rem" }}>
+              {product.categories?.some((c: any) => c.name?.toLowerCase().includes("cake")) && (
+                <label style={{ display: "flex", alignItems: "center", gap: "0.5rem", cursor: "pointer", fontSize: "0.875rem", marginBottom: "0.5rem" }}>
+                  <input type="checkbox" checked={eggLessAdded} onChange={(e) => setEggLessAdded(e.target.checked)} />
+                  <span>Make it Eggless (+ {formatPrice(EGGLESS_PRICE)})</span>
+                </label>
+              )}
+              {product.categories?.some((c: any) => c.name?.toLowerCase().includes("flower")) && (
+                <label style={{ display: "flex", alignItems: "center", gap: "0.5rem", cursor: "pointer", fontSize: "0.875rem", marginBottom: "0.5rem" }}>
+                  <input type="checkbox" checked={glassVaseAdded} onChange={(e) => setGlassVaseAdded(e.target.checked)} />
+                  <span>Include Glass Vase (+ {formatPrice(VASE_PRICE)})</span>
+                </label>
+              )}
+            </div>
 
             {error && (
               <p style={{ color: "#dc2626", fontSize: "0.8rem", marginTop: "0.5rem" }}>{error}</p>

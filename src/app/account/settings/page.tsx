@@ -1,6 +1,12 @@
 "use client";
 
+import { useSession } from "next-auth/react";
+
 export default function AccountSettingsPage() {
+  const { data: session } = useSession();
+  const userName = session?.user?.name || "";
+  const userEmail = session?.user?.email || "";
+
   return (
     <div style={{ backgroundColor: 'white', borderRadius: '1rem', padding: '2rem', boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)' }}>
       <h1 style={{ fontSize: '1.5rem', color: 'var(--color-dark)', marginBottom: '1.5rem', fontFamily: 'var(--font-serif)' }}>Account Settings</h1>
@@ -9,12 +15,12 @@ export default function AccountSettingsPage() {
       <form style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', maxWidth: '32rem' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
           <label style={{ fontSize: '0.75rem', fontWeight: 600, color: '#4b5563', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Full Name</label>
-          <input type="text" defaultValue="John Doe" style={{ border: '1px solid #d1d5db', borderRadius: '0.375rem', padding: '0.75rem 1rem', fontSize: '0.875rem', width: '100%' }} />
+          <input type="text" defaultValue={userName} style={{ border: '1px solid #d1d5db', borderRadius: '0.375rem', padding: '0.75rem 1rem', fontSize: '0.875rem', width: '100%' }} />
         </div>
         
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
           <label style={{ fontSize: '0.75rem', fontWeight: 600, color: '#4b5563', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Email Address</label>
-          <input type="email" defaultValue="john@example.com" style={{ border: '1px solid #d1d5db', borderRadius: '0.375rem', padding: '0.75rem 1rem', fontSize: '0.875rem', width: '100%' }} disabled />
+          <input type="email" defaultValue={userEmail} style={{ border: '1px solid #d1d5db', borderRadius: '0.375rem', padding: '0.75rem 1rem', fontSize: '0.875rem', width: '100%' }} disabled />
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '1rem' }}>
