@@ -13,16 +13,20 @@ import type { RootState } from '@/lib/store';
 import styles from './Header.module.css';
 
 const headerThemes = [
-  { name: "Olive Dark", hex: "#2A3522", text: "#ffffff", logo: "/logo-white.webp", filter: "none" },
-  { name: "Olive (White Logo)", hex: "#3B4D36", text: "#ffffff", logo: "/logo-white.webp", filter: "none" },
-  { name: "Olive (Gold Logo)", hex: "#3B4D36", text: "#ffffff", logo: "/logo-white.webp", filter: "brightness(0) saturate(100%) invert(72%) sepia(21%) saturate(1344%) hue-rotate(345deg) brightness(92%) contrast(85%)" },
-  { name: "Primary", hex: "#556B4F", text: "#ffffff", logo: "/logo-white.webp", filter: "none" },
-  { name: "M&S Green", hex: "#123b2c", text: "#ffffff", logo: "/logo-white.webp", filter: "none" },
-  { name: "Pine", hex: "#1c3e35", text: "#ffffff", logo: "/logo-white.webp", filter: "none" },
-  { name: "Moss", hex: "#43523d", text: "#ffffff", logo: "/logo-white.webp", filter: "none" },
-  { name: "Emerald Dark", hex: "#0d4036", text: "#ffffff", logo: "/logo-white.webp", filter: "none" },
-  { name: "Matcha", hex: "#758467", text: "#ffffff", logo: "/logo-white.webp", filter: "none" },
-  { name: "Ugaoo Green", hex: "#145c36", text: "#ffffff", logo: "/logo-white.webp", filter: "none" }
+  { name: "Olive (White)", hex: "#3B4D36", text: "#ffffff", logo: "/logo-white.webp", filter: "none" },
+  { name: "Olive (Logo 1)", hex: "#3B4D36", text: "#ffffff", logo: "/logo1_transparent.png", filter: "none" },
+  { name: "Olive (Logo 2)", hex: "#3B4D36", text: "#ffffff", logo: "/34.png", filter: "none" },
+  { name: "Olive (Logo 3)", hex: "#3B4D36", text: "#ffffff", logo: "/logo3_transparent.png", filter: "none" },
+  
+  { name: "Primary (White)", hex: "#556B4F", text: "#ffffff", logo: "/logo-white.webp", filter: "none" },
+  { name: "Primary (Logo 1)", hex: "#556B4F", text: "#ffffff", logo: "/logo1_transparent.png", filter: "none" },
+  { name: "Primary (Logo 2)", hex: "#556B4F", text: "#ffffff", logo: "/34.png", filter: "none" },
+  { name: "Primary (Logo 3)", hex: "#556B4F", text: "#ffffff", logo: "/logo3_transparent.png", filter: "none" },
+  
+  { name: "Moss Gold (White)", hex: "#545C33", text: "#ffffff", logo: "/logo-white.webp", filter: "none" },
+  { name: "Moss Gold (Logo 1)", hex: "#545C33", text: "#ffffff", logo: "/logo1_transparent.png", filter: "none" },
+  { name: "Moss Gold (Logo 2)", hex: "#545C33", text: "#ffffff", logo: "/34.png", filter: "none" },
+  { name: "Moss Gold (Logo 3)", hex: "#545C33", text: "#ffffff", logo: "/logo3_transparent.png", filter: "none" }
 ];
 
 export default function Header() {
@@ -45,6 +49,17 @@ export default function Header() {
     const theme = headerThemes[activeTheme];
     document.documentElement.style.setProperty('--color-olive-dark', theme.hex);
     document.documentElement.style.setProperty('--color-primary', theme.hex);
+    
+    // Update mobile browser task bar
+    let metaThemeColor = document.querySelector('meta[name="theme-color"]');
+    if (metaThemeColor) {
+      metaThemeColor.setAttribute('content', theme.hex);
+    } else {
+      metaThemeColor = document.createElement('meta');
+      metaThemeColor.setAttribute('name', 'theme-color');
+      metaThemeColor.setAttribute('content', theme.hex);
+      document.head.appendChild(metaThemeColor);
+    }
   }, [activeTheme]);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -140,7 +155,7 @@ export default function Header() {
   }, []);
 
   return (
-    <header className={`${styles.header} bg-olive-dark ${headerThemes[activeTheme].name === 'White' ? styles.lightTheme : ''}`}>
+    <header className={`${styles.header} bg-olive-dark ${headerThemes[activeTheme].hex.toUpperCase() === '#FFFFFF' ? styles.lightTheme : ''}`}>
 
       {/* ── Top Bar ── */}
       <div className={styles.topBar}>
