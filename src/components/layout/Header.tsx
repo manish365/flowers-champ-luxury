@@ -13,20 +13,15 @@ import type { RootState } from '@/lib/store';
 import styles from './Header.module.css';
 
 const headerThemes = [
-  { name: "Olive (White)", hex: "#3B4D36", text: "#ffffff", logo: "/logo-white.webp", filter: "none" },
-  { name: "Olive (Logo 1)", hex: "#3B4D36", text: "#ffffff", logo: "/logo1_transparent.png", filter: "none" },
-  { name: "Olive (Logo 2)", hex: "#3B4D36", text: "#ffffff", logo: "/34.png", filter: "none" },
   { name: "Olive (Logo 3)", hex: "#3B4D36", text: "#ffffff", logo: "/logo3_transparent.png", filter: "none" },
-  
-  { name: "Primary (White)", hex: "#556B4F", text: "#ffffff", logo: "/logo-white.webp", filter: "none" },
-  { name: "Primary (Logo 1)", hex: "#556B4F", text: "#ffffff", logo: "/logo1_transparent.png", filter: "none" },
+  { name: "Primary (Logo 1)", hex: "#556B4F", text: "#ffffff", logo: "/logo1_transparent.png", filter: "none", logoWidth: 160, logoHeight: 42 },
   { name: "Primary (Logo 2)", hex: "#556B4F", text: "#ffffff", logo: "/34.png", filter: "none" },
-  { name: "Primary (Logo 3)", hex: "#556B4F", text: "#ffffff", logo: "/logo3_transparent.png", filter: "none" },
   
-  { name: "Moss Gold (White)", hex: "#545C33", text: "#ffffff", logo: "/logo-white.webp", filter: "none" },
-  { name: "Moss Gold (Logo 1)", hex: "#545C33", text: "#ffffff", logo: "/logo1_transparent.png", filter: "none" },
+  { name: "Moss Gold (Logo 1)", hex: "#545C33", text: "#ffffff", logo: "/logo1_transparent.png", filter: "none", logoWidth: 160, logoHeight: 42 },
   { name: "Moss Gold (Logo 2)", hex: "#545C33", text: "#ffffff", logo: "/34.png", filter: "none" },
-  { name: "Moss Gold (Logo 3)", hex: "#545C33", text: "#ffffff", logo: "/logo3_transparent.png", filter: "none" }
+  
+  { name: "White (Logo 1)", hex: "#FFFFFF", text: "#2E2E2E", logo: "/logo1_transparent.png", filter: "brightness(0)", logoWidth: 160, logoHeight: 42 },
+  { name: "White (Logo 2)", hex: "#FFFFFF", text: "#2E2E2E", logo: "/logo1_transparent.png", filter: "none" },
 ];
 
 export default function Header() {
@@ -217,10 +212,15 @@ export default function Header() {
             <Image 
               src={headerThemes[activeTheme].logo}
               alt="Flowers Champ Logo"
-              width={180}
-              height={46}
+              width={headerThemes[activeTheme].logoWidth || 180}
+              height={headerThemes[activeTheme].logoHeight || 46}
               className={styles.mainLogo}
-              style={{ filter: headerThemes[activeTheme].filter }}
+              style={{ 
+                filter: headerThemes[activeTheme].filter,
+                objectFit: 'contain',
+                maxHeight: headerThemes[activeTheme].logoHeight ? `${headerThemes[activeTheme].logoHeight}px` : '46px',
+                width: 'auto'
+              }}
             />
           </Link>
         </div>
