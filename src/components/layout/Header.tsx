@@ -13,15 +13,16 @@ import type { RootState } from '@/lib/store';
 import styles from './Header.module.css';
 
 const headerThemes = [
-  { name: "Olive Dark", hex: "#2A3522", text: "#ffffff", logo: "/logo-white.webp", filter: "brightness(0) invert(1)" },
-  { name: "Olive (White Logo)", hex: "#3B4D36", text: "#ffffff", logo: "/logo-white.webp", filter: "brightness(0) invert(1)" },
+  { name: "Olive Dark", hex: "#2A3522", text: "#ffffff", logo: "/logo-white.webp", filter: "none" },
+  { name: "Olive (White Logo)", hex: "#3B4D36", text: "#ffffff", logo: "/logo-white.webp", filter: "none" },
   { name: "Olive (Gold Logo)", hex: "#3B4D36", text: "#ffffff", logo: "/logo-white.webp", filter: "brightness(0) saturate(100%) invert(72%) sepia(21%) saturate(1344%) hue-rotate(345deg) brightness(92%) contrast(85%)" },
-  { name: "Primary", hex: "#556B4F", text: "#ffffff", logo: "/logo-white.webp", filter: "brightness(0) invert(1)" },
-  { name: "M&S Green", hex: "#123b2c", text: "#ffffff", logo: "/logo-white.webp", filter: "brightness(0) invert(1)" },
-  { name: "Pine", hex: "#1c3e35", text: "#ffffff", logo: "/logo-white.webp", filter: "brightness(0) invert(1)" },
-  { name: "Moss", hex: "#43523d", text: "#ffffff", logo: "/logo-white.webp", filter: "brightness(0) invert(1)" },
-  { name: "Emerald Dark", hex: "#0d4036", text: "#ffffff", logo: "/logo-white.webp", filter: "brightness(0) invert(1)" },
-  { name: "Matcha", hex: "#758467", text: "#ffffff", logo: "/logo-white.webp", filter: "brightness(0) invert(1)" }
+  { name: "Primary", hex: "#556B4F", text: "#ffffff", logo: "/logo-white.webp", filter: "none" },
+  { name: "M&S Green", hex: "#123b2c", text: "#ffffff", logo: "/logo-white.webp", filter: "none" },
+  { name: "Pine", hex: "#1c3e35", text: "#ffffff", logo: "/logo-white.webp", filter: "none" },
+  { name: "Moss", hex: "#43523d", text: "#ffffff", logo: "/logo-white.webp", filter: "none" },
+  { name: "Emerald Dark", hex: "#0d4036", text: "#ffffff", logo: "/logo-white.webp", filter: "none" },
+  { name: "Matcha", hex: "#758467", text: "#ffffff", logo: "/logo-white.webp", filter: "none" },
+  { name: "Ugaoo Green", hex: "#145c36", text: "#ffffff", logo: "/logo-white.webp", filter: "none" }
 ];
 
 export default function Header() {
