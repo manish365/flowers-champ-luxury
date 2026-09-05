@@ -55,6 +55,7 @@
   line-height: 1.1;
   margin-bottom: 1rem;
   font-weight: 400;
+  color: var(--color-dark);
 }
 
 @media (min-width: 768px) {
@@ -66,7 +67,7 @@
 }
 
 .heroDesc {
-  color: rgba(247, 243, 238, 0.8);
+  color: var(--color-dark);
   font-size: 0.875rem;
   margin-bottom: 1.5rem;
   max-width: 28rem;
@@ -116,8 +117,8 @@
 
 .btnSecondary {
   width: 100%;
-  border: 1px solid rgba(247, 243, 238, 0.3);
-  color: var(--color-cream);
+  border: 1px solid var(--color-gold);
+  color: var(--color-dark);
   padding: 0.875rem 2rem;
   border-radius: 0.25rem;
   font-size: 16px;

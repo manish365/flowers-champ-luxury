@@ -19,7 +19,7 @@ export const authOptions: NextAuthOptions = {
         const email = username;
 
         // Use the old backend URL
-        const serverUrl = backendURL || "http://localhost:8080";
+        const serverUrl = backendURL || "https://flowerschamp-service-prod.up.railway.app";
         const res = await fetch(`${serverUrl}/user-auth/login`, {
           method: 'POST',
           mode: 'cors',

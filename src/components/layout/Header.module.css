@@ -163,7 +163,11 @@
   height: auto;
   width: 120px;
   flex-shrink: 1;
-  filter: brightness(0) saturate(100%) invert(72%) sepia(21%) saturate(1344%) hue-rotate(345deg) brightness(92%) contrast(85%);
+  filter: brightness(0) invert(1);
+}
+
+[data-theme='light'] .mainLogo {
+  filter: brightness(0) saturate(100%) invert(0%);
 }
 
 @media (min-width: 640px) {
@@ -380,7 +384,7 @@
   top: 112px;
   left: 0;
   width: 100%;
-  background: linear-gradient(135deg, #1a2318 0%, #243020 60%, #1e2a1c 100%);
+  background-color: var(--color-olive-dark);
   box-shadow: 0 20px 40px rgba(0,0,0,0.4), 0 1px 0 rgba(200,169,107,0.15);
   z-index: 100;
   border-top: 1px solid rgba(200, 169, 107, 0.2);
@@ -984,3 +988,24 @@
   border-color: var(--color-gold);
   color: var(--color-gold);
 }
+/* Theme Overrides */
+.lightTheme .topBarInner { color: var(--color-dark); }
+.lightTheme .navLink { color: var(--color-dark); }
+.lightTheme .topBarWa { color: var(--color-dark); }
+.lightTheme .topBarLocation { color: var(--color-dark); }
+.lightTheme .actionIcon { color: var(--color-dark); }
+.lightTheme .iconBtn { color: var(--color-dark); }
+.lightTheme .mobileMenuBtn { color: var(--color-dark); }
+.lightTheme .topBar { border-bottom-color: #e5e7eb; background-color: transparent; }
+.lightTheme .mobileMenu { background-color: #ffffff; color: var(--color-dark); }
+.lightTheme .mobileNavLink { color: var(--color-dark); }
+.lightTheme .megamenuPanel { background-color: #ffffff; border-top-color: #e5e7eb; }
+.lightTheme .megamenuHeader { color: var(--color-dark); }
+.lightTheme .megamenuLink { color: rgba(46, 46, 46, 0.85); border-bottom-color: #f3f4f6; }
+.lightTheme .megamenuLink:hover { color: var(--color-gold); }
+.lightTheme .megamenuFeatureTitle { color: var(--color-dark); }
+.lightTheme .megamenuFeatureText { color: rgba(46, 46, 46, 0.7); }
+.lightTheme .megamenuFeatureBtn { color: var(--color-dark); border-color: var(--color-dark); }
+.lightTheme .megamenuAccentBar { background-color: var(--color-gold); }
+
+.lightTheme .mainLogo { filter: brightness(0); }

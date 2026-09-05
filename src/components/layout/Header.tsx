@@ -12,6 +12,16 @@ import { setSelectedCity } from '@/lib/store/reducers/user';
 import type { RootState } from '@/lib/store';
 import styles from './Header.module.css';
 
+const headerThemes = [
+  { name: "Olive Dark", hex: "#2A3522", text: "#ffffff", logo: "/logo-white.webp" },
+  { name: "Olive", hex: "#3B4D36", text: "#ffffff", logo: "/logo-white.webp" },
+  { name: "Primary", hex: "#556B4F", text: "#ffffff", logo: "/logo-white.webp" },
+  { name: "Sage", hex: "#666a47", text: "#ffffff", logo: "/logo-white.webp" },
+  { name: "White", hex: "#ffffff", text: "#2E2E2E", logo: "/logo.png" },
+  { name: "Merlot", hex: "#4A1525", text: "#ffffff", logo: "/logo-white.webp" },
+  { name: "Onyx", hex: "#1C1E21", text: "#ffffff", logo: "/logo-white.webp" }
+];
+
 export default function Header() {
   const { data: session } = useSession();
   const isLoggedIn = !!session?.user;
@@ -26,6 +36,13 @@ export default function Header() {
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const [activeSubMenu, setActiveSubMenu] = useState<string | null>(null);
   const [activeMobileMenu, setActiveMobileMenu] = useState<string | null>(null);
+  const [activeTheme, setActiveTheme] = useState(0);
+
+  useEffect(() => {
+    const theme = headerThemes[activeTheme];
+    document.documentElement.style.setProperty('--color-olive-dark', theme.hex);
+    document.documentElement.style.setProperty('--color-primary', theme.hex);
+  }, [activeTheme]);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
@@ -120,7 +137,7 @@ export default function Header() {
   }, []);
 
   return (
-    <header className={`${styles.header} bg-olive-dark`}>
+    <header className={`${styles.header} bg-olive-dark ${headerThemes[activeTheme].name === 'White' ? styles.lightTheme : ''}`}>
 
       {/* ── Top Bar ── */}
       <div className={styles.topBar}>
@@ -135,6 +152,27 @@ export default function Header() {
           <div className={styles.topBarCenter}>Fresh Flowers • Handpicked With Love</div>
           {/* Right */}
           <div className={styles.topBarRight}>
+            {/* Theme Picker */}
+            <div style={{ display: 'flex', gap: '6px', alignItems: 'center', marginRight: '16px' }}>
+              <span style={{ fontSize: '0.625rem', opacity: 0.8, marginRight: '4px' }}>Theme:</span>
+              {headerThemes.map((t, idx) => (
+                <button
+                  key={t.name}
+                  onClick={() => setActiveTheme(idx)}
+                  title={t.name}
+                  style={{
+                    width: '14px',
+                    height: '14px',
+                    borderRadius: '50%',
+                    backgroundColor: t.hex,
+                    border: activeTheme === idx ? '2px solid var(--color-gold)' : '1px solid #9ca3af',
+                    cursor: 'pointer',
+                    padding: 0
+                  }}
+                />
+              ))}
+            </div>
+            
             {/* Location pill */}
             <div className={styles.topBarLocation} onClick={() => setIsLocationModalOpen(true)}>
               <MapPin size={12} className={styles.topBarLocationIcon} />
@@ -159,7 +197,7 @@ export default function Header() {
         <div className={styles.logoAndLocation}>
           <Link href="/" className={styles.logoArea}>
             <Image 
-              src="/logo-white.webp"
+              src={headerThemes[activeTheme].logo}
               alt="Flowers Champ Logo"
               width={180}
               height={46}

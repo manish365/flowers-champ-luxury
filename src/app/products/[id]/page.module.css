@@ -101,7 +101,7 @@
 
 .favButton:hover {
   background-color: var(--color-gold);
-  color: white;
+  color: var(--color-dark);
 }
 
 .mainImage {
@@ -334,7 +334,7 @@
 
 .deliveryBtn {
   background-color: var(--color-olive);
-  color: white;
+  color: var(--color-dark);
   padding: 0.625rem 1.5rem;
   border-radius: 0.25rem;
   font-size: 0.75rem;
@@ -411,7 +411,7 @@
 .addToCartBig {
   flex: 1;
   background-color: var(--color-olive);
-  color: white;
+  color: var(--color-dark);
   border-radius: 0.25rem;
   height: 3rem;
   display: flex;
@@ -564,7 +564,7 @@
 
 /* Related Products */
 .relatedSection {
-  background-color: white;
+  background-color: #f9fafb;
   padding: 4rem 0;
 }
 
@@ -662,7 +662,7 @@
 .relatedActionBtn {
   width: 2.5rem;
   height: 2.5rem;
-  background-color: white;
+  background-color: var(--color-dark);
   color: var(--color-olive);
   border-radius: 9999px;
   display: flex;
@@ -683,7 +683,7 @@
 
 .relatedActionBtn:hover {
   background-color: var(--color-gold);
-  color: white;
+  color: var(--color-dark);
 }
 
 .relatedProductInfo {

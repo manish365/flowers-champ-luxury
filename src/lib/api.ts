@@ -1,4 +1,4 @@
-const BASE_URL = process.env.NEXT_PUBLIC_BACK_END_URL || "http://localhost:8080";
+const BASE_URL = process.env.NEXT_PUBLIC_BACK_END_URL || "https://flowerschamp-service-prod.up.railway.app";
 
 async function get(path: string, options?: RequestInit) {
   const res = await fetch(`${BASE_URL}${path}`, { next: { revalidate: 3600 }, ...options });

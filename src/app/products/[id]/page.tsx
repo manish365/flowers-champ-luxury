@@ -52,8 +52,7 @@ export default function ProductPDP() {
   const VASE_PRICE = 399000;
   const EGGLESS_PRICE = 99000;
 
-  // tabs
-  const [activeTab, setActiveTab] = useState<"description" | "care" | "delivery">("description");
+  // tabs removed
 
   const isFav = favProducts?.includes(id);
   const inCart = cartItems.some((c: any) => c.id === id);
@@ -263,6 +262,17 @@ export default function ProductPDP() {
             </div>
 
             <h1 className={`${styles.title} font-serif`}>{product.name}</h1>
+            
+            <p className={styles.subTitle} style={{ fontSize: "0.875rem", color: "#6b7280", marginTop: "-0.5rem", marginBottom: "0.5rem", fontWeight: 500 }}>
+              {product.country?.name || "Indonesia"} {product.delivery?.deliveryFrequency ? `, ${product.delivery.deliveryFrequency} Delivery` : ""}
+            </p>
+            
+            {product.vendorDescription?.standard && (
+              <p className={styles.vendorDesc} style={{ fontSize: "0.875rem", color: "var(--color-dark)", fontWeight: 600, marginBottom: "0.5rem" }}>
+                {product.vendorDescription.standard}
+              </p>
+            )}
+
             <p className={styles.description}>{product.description}</p>
 
             <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "1.5rem" }}>
@@ -305,8 +315,8 @@ export default function ProductPDP() {
                 })}
               </div>
             </div>
-
-            {/* City Select */}
+            <div style={{display:"flex"}}>
+ {/* City Select */}
             <div className={styles.deliveryCheck}>
               <h3 className={styles.deliveryTitle}>
                 <MapPin size={14} /> Select Delivery City
@@ -326,7 +336,7 @@ export default function ProductPDP() {
 
             {/* Delivery Date & Slot */}
             {selectedCity && (
-              <div className={styles.deliveryCheck} style={{ marginTop: "1rem" }}>
+              <div className={styles.deliveryCheck} style={{ marginTop: "0rem", marginLeft:"1rem" }}>
                 <h3 className={styles.deliveryTitle}>
                   <Truck size={14} /> Select Delivery Details
                 </h3>
@@ -366,6 +376,9 @@ export default function ProductPDP() {
                 </div>
               </div>
             )}
+            </div>
+
+           
 
             {/* Variant / Upgrades (Eggless / Vase) */}
             <div style={{ marginTop: "1.5rem" }}>
@@ -388,22 +401,21 @@ export default function ProductPDP() {
             )}
 
             {/* Actions */}
-            <div className={styles.actionGroup} style={{ marginTop: "1.5rem" }}>
+            <div className={styles.actionGroup} style={{ marginTop: "1.5rem", display: "flex", flexDirection: "row", gap: "1rem" }}>
               {!inCart ? (
-                <button className={styles.addToCartBig} onClick={handleAddToCart}>
+                <button className={styles.addToCartBig} onClick={handleAddToCart} style={{ flex: 1, marginBottom: 0 }}>
                   <ShoppingBag size={16} /> Add To Cart
                 </button>
               ) : (
                 <button className={styles.addToCartBig} onClick={() => router.push("/cart")}
-                  style={{ background: "var(--color-gold)" }}>
+                  style={{ flex: 1, background: "var(--color-gold)", marginBottom: 0 }}>
                   <ShoppingBag size={16} /> Go To Cart
                 </button>
               )}
+              <button className={styles.buyNowBtn} onClick={handleAddToCart} style={{ flex: 1, marginBottom: 0 }}>
+                Buy It Now
+              </button>
             </div>
-
-            <button className={styles.buyNowBtn} onClick={handleAddToCart}>
-              Buy It Now
-            </button>
 
             {/* Features */}
             <div className={styles.featuresGrid}>
@@ -426,45 +438,48 @@ export default function ProductPDP() {
         </div>
       </section>
 
-      {/* Tabs */}
-      <section className={styles.tabsSection}>
-        <div className={`container ${styles.tabsContainer}`}>
-          <div className={styles.tabHeaders}>
-            {(["description", "care", "delivery"] as const).map((tab) => (
-              <button
-                key={tab}
-                className={`${styles.tabBtn} ${activeTab === tab ? styles.tabActive : ""}`}
-                onClick={() => setActiveTab(tab)}
-                style={{ textTransform: "capitalize" }}
-              >
-                {tab === "care" ? "Care Guide" : tab}
-              </button>
-            ))}
+      {/* Details Section */}
+      <section className={styles.detailsSection} style={{ padding: "2rem 0", background: "white", color: "var(--color-dark)" }}>
+        <div className={`container ${styles.detailsContainer}`} style={{ maxWidth: "1000px", margin: "0 auto" }}>
+          
+          <div className={styles.detailBlock} style={{ marginBottom: "2rem" }}>
+            <h3 className={styles.detailTitle} style={{ fontSize: "1.25rem", fontWeight: 700, marginBottom: "1rem", color: "var(--color-dark)", textTransform: "uppercase", letterSpacing: "0.05em", borderBottom: "2px solid var(--color-gold)", paddingBottom: "0.5rem", display: "inline-block" }}>Description</h3>
+            <p className={styles.detailText} style={{ lineHeight: 1.7, color: "#4b5563" }}>
+              {product.description || "Premium quality flowers, carefully arranged by our expert florists."}
+            </p>
+            {product.code && <p className={styles.detailText} style={{ lineHeight: 1.7, color: "#4b5563", marginTop: "1rem", fontWeight: 600 }}>Product Code: #{product.code}</p>}
           </div>
-          <div className={styles.tabContent}>
-            {activeTab === "description" && (
-              <>
-                <p className={styles.tabText}>{product.description || "Premium quality flowers, carefully arranged by our expert florists."}</p>
-                <p className={styles.tabText}>Product Code: #{product.code}</p>
-              </>
-            )}
-            {activeTab === "care" && (
-              <ul className={styles.tabList}>
-                <li>Keep flowers in a cool, shaded area away from direct sunlight.</li>
-                <li>Change water every 2 days and trim stems at an angle.</li>
-                <li>Remove wilted petals to extend the life of the arrangement.</li>
-                <li>Avoid placing near fruits or heat sources.</li>
-              </ul>
-            )}
-            {activeTab === "delivery" && (
-              <ul className={styles.tabList}>
-                <li>Same-day delivery available for orders placed before 4 PM.</li>
-                <li>Delivery available across all major cities in Indonesia.</li>
-                <li>Midnight delivery available in select cities.</li>
-                <li>Fragile items are packed with extra care.</li>
-              </ul>
-            )}
+
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "2rem" }}>
+            <div className={styles.detailBlock}>
+              <h3 className={styles.detailTitle} style={{ fontSize: "1.25rem", fontWeight: 700, marginBottom: "1rem", color: "var(--color-dark)", textTransform: "uppercase", letterSpacing: "0.05em", borderBottom: "2px solid var(--color-gold)", paddingBottom: "0.5rem", display: "inline-block" }}>Flower Care Guide</h3>
+              {product.leftContent ? (
+                <div className={styles.detailHtml} style={{ lineHeight: 1.7, color: "#4b5563" }} dangerouslySetInnerHTML={{ __html: product.leftContent }} />
+              ) : (
+                <ul className={styles.tabList} style={{ lineHeight: 1.7, color: "#4b5563", paddingLeft: "1.5rem", listStyleType: "disc" }}>
+                  <li style={{ marginBottom: "0.5rem" }}>Keep flowers in a cool, shaded area away from direct sunlight.</li>
+                  <li style={{ marginBottom: "0.5rem" }}>Change water every 2 days and trim stems at an angle.</li>
+                  <li style={{ marginBottom: "0.5rem" }}>Remove wilted petals to extend the life of the arrangement.</li>
+                  <li style={{ marginBottom: "0.5rem" }}>Avoid placing near fruits or heat sources.</li>
+                </ul>
+              )}
+            </div>
+
+            <div className={styles.detailBlock}>
+              <h3 className={styles.detailTitle} style={{ fontSize: "1.25rem", fontWeight: 700, marginBottom: "1rem", color: "var(--color-dark)", textTransform: "uppercase", letterSpacing: "0.05em", borderBottom: "2px solid var(--color-gold)", paddingBottom: "0.5rem", display: "inline-block" }}>Delivery Information</h3>
+              {product.rightContent ? (
+                <div className={styles.detailHtml} style={{ lineHeight: 1.7, color: "#4b5563" }} dangerouslySetInnerHTML={{ __html: product.rightContent }} />
+              ) : (
+                <ul className={styles.tabList} style={{ lineHeight: 1.7, color: "#4b5563", paddingLeft: "1.5rem", listStyleType: "disc" }}>
+                  <li style={{ marginBottom: "0.5rem" }}>Same-day delivery available for orders placed before 4 PM.</li>
+                  <li style={{ marginBottom: "0.5rem" }}>Delivery available across all major cities in Indonesia.</li>
+                  <li style={{ marginBottom: "0.5rem" }}>Midnight delivery available in select cities.</li>
+                  <li style={{ marginBottom: "0.5rem" }}>Fragile items are packed with extra care.</li>
+                </ul>
+              )}
+            </div>
           </div>
+
         </div>
       </section>
 

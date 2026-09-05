@@ -66,7 +66,7 @@ export default function HeroBanner({ banners }: HeroBannerProps) {
             width: '100%', 
             height: '100%', 
             position: 'relative',
-            background: 'linear-gradient(to bottom right, var(--color-olive), var(--color-olive-dark))'
+            background: 'linear-gradient(to bottom right, #ffffff, #f9fafb)'
           }}>
             <div className={`container ${styles.heroContent}`} style={{ height: '100%' }}>
               <div className={styles.heroText} style={{ visibility: 'hidden' }}>
