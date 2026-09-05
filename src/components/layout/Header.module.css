@@ -163,7 +163,7 @@
   height: auto;
   width: 120px;
   flex-shrink: 1;
-  filter: brightness(0) invert(1);
+  
 }
 
 [data-theme='light'] .mainLogo {
